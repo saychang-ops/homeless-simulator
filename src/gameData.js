@@ -4,23 +4,23 @@
  * ═══════════════════════════════════════════════════ */
 
 /* ── 時刻別エリア画像 ── */
-import bgNishiMorning from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_nishi_morning_1772362813181.png'
-import bgNishiNoon from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_nishi_noon_1772362826633.png'
-import bgNishiEvening from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_nishi_evening_1772362843655.png'
-import bgNishiNight from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_nishiguchi_v2_1772361188900.png'
+const bgNishiMorning = '/image/bg/bg_nishi_morning_1772362813181.png'
+const bgNishiNoon = '/image/bg/bg_nishi_noon_1772362826633.png'
+const bgNishiEvening = '/image/bg/bg_nishi_evening_1772362843655.png'
+const bgNishiNight = '/image/bg/bg_nishiguchi_v2_1772361188900.png'
 
-import bgTochoMorning from '../../../brain/fb9976ce-5aad-437a-9814-38ec7146ff53/bg_tocho_morning_cheap_1772910069735.png'
-import bgTochoNoon from '../../../brain/fb9976ce-5aad-437a-9814-38ec7146ff53/bg_tocho_noon_cheap_1772910088939.png'
-import bgTochoEvening from '../../../brain/fb9976ce-5aad-437a-9814-38ec7146ff53/bg_tocho_evening_cheap_1772910106479.png'
-import bgTochoNight from '../../../brain/fb9976ce-5aad-437a-9814-38ec7146ff53/bg_tocho_night_cheap_1772910123196.png'
+const bgTochoMorning = '/image/bg/bg_tocho_morning_cheap_1772910069735.png'
+const bgTochoNoon = '/image/bg/bg_tocho_noon_cheap_1772910088939.png'
+const bgTochoEvening = '/image/bg/bg_tocho_evening_cheap_1772910106479.png'
+const bgTochoNight = '/image/bg/bg_tocho_night_cheap_1772910123196.png'
 
-import bgParkMorning from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_park_morning_1772362929856.png'
-import bgParkNoon from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_park_noon_1772362964470.png'
-import bgParkEvening from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_park_evening_1772362978037.png'
-import bgParkNight from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/bg_park_v2_1772361219411.png'
+const bgParkMorning = '/image/bg/bg_park_morning_1772362929856.png'
+const bgParkNoon = '/image/bg/bg_park_noon_1772362964470.png'
+const bgParkEvening = '/image/bg/bg_park_evening_1772362978037.png'
+const bgParkNight = '/image/bg/bg_park_v2_1772361219411.png'
 
 /* ── 拠点画像 ── */
-import baseLevel1Img from '../../../brain/41032a6c-e929-476a-881f-7408dba032a1/base_level1_v2_1772451369994.png'
+const baseLevel1Img = '/image/bg/base_level1_v2_1772451369994.png'
 const baseLevel0Img = null  // のざらし = 公園の通常画像を使うので null
 
 /* ── 時間帯判定 ── */
