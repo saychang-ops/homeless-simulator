@@ -90,6 +90,12 @@ const TypewriterTextArea = ({ logs, logColor }) => {
  * ═══════════════════════════════════════════════════ */
 function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
     return (
+        <>
+        <div className="portrait-warning">
+            <div style={{ fontSize: 36 }}>↻</div>
+            <div>スマホを横にしてください</div>
+            <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
+        </div>
         <div style={{
             position: 'fixed', inset: 0, background: '#000',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -134,6 +140,7 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                 </div>
             </div>
         </div>
+        </>
     )
 }
 
@@ -591,6 +598,14 @@ export default function App() {
         soundManager.enable()
         soundManager.playTextSound()
         soundManager.playOpeningBGM()
+        // フルスクリーン化
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {})
+        }
+        // 横画面ロック
+        if (window.screen?.orientation?.lock) {
+            window.screen.orientation.lock('landscape').catch(() => {})
+        }
         setScreen('menu')
     }
 
@@ -1304,6 +1319,12 @@ export default function App() {
     const workLog = gameState.activeJob ? `きんむしゅうりょうまで ${jobRemaining}` : ''
 
     return (
+        <>
+        <div className="portrait-warning">
+            <div style={{ fontSize: 36 }}>↻</div>
+            <div>スマホを横にしてください</div>
+            <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
+        </div>
         <div onClick={() => soundManager.enable()} style={{ height: '100%', display: 'flex', flexDirection: 'column', fontFamily: FONT, fontSize: FS, userSelect: 'none', position: 'relative', background: '#000' }}>
             <div className="crt-overlay" /><div className="crt-vignette" />
 
@@ -1384,5 +1405,6 @@ export default function App() {
             </div>
 
         </div>
+        </>
     )
 }
