@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
     COMMANDS, AREAS, AREA_LIST, BASE_LEVELS, ITEMS, INITIAL_STATE, BENTO_SHOP_ITEMS, FURUGIYA_ITEMS,
     CLOTHING_SLOTS, CLOTHING_SLOT_NAMES, CLOTHING_ITEMS, WORK_COMMANDS,
@@ -89,6 +89,11 @@ const TypewriterTextArea = ({ logs, logColor }) => {
  *  タイトル画面コンポーネント
  * ═══════════════════════════════════════════════════ */
 function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
+    useEffect(() => {
+        // タイトル表示直後にフルスクリーンを試行（対応ブラウザのみ有効）
+        document.documentElement.requestFullscreen().catch(() => { })
+    }, [])
+
     return (
         <>
             <div className="portrait-warning">
@@ -192,6 +197,10 @@ export default function App() {
     // タイトル画面管理
     const [screen, setScreen] = useState('title')   // 'title' | 'menu' | 'game'
     const [hasSave, setHasSave] = useState(false)
+
+    // 右カラムスクロールインジケーター
+    const rightCmdRef = useRef(null)
+    const [rightShowScroll, setRightShowScroll] = useState(false)
 
     const setRecentLogs = useCallback((nl) => setLogs(nl.slice(-5)), [])
     const addLogs = useCallback((nl) => setLogs(prev => [...prev, ...nl].slice(-5)), [])
@@ -431,6 +440,16 @@ export default function App() {
 
         return () => { clearInterval(iv); clearInterval(soundIv); clearInterval(saveIv) }
     }, [gameState, gameOverScreen, weatherData, loaded, addLogs])
+
+    /* ── 右カラムスクロールインジケーター ── */
+    useEffect(() => {
+        const el = rightCmdRef.current
+        if (!el) return
+        const update = () => setRightShowScroll(el.scrollHeight > el.clientHeight + el.scrollTop + 2)
+        update()
+        el.addEventListener('scroll', update)
+        return () => el.removeEventListener('scroll', update)
+    }, [subMenu, gameState?.area])
 
     /* ── コマンドハンドラ ── */
     const handleCommand = (commandId) => {
@@ -690,7 +709,7 @@ export default function App() {
     const feelsLikeStr = `${gameState.status.feelsLike ?? '--'}℃`
     const weatherFilter = weatherOverlay === 'rain' ? 'brightness(0.6) contrast(1.1)' : weatherOverlay === 'cloudy' ? 'brightness(0.8) saturate(0.7)' : 'none'
 
-    const S = { color: '#fff', cursor: 'pointer', padding: '4px 0', fontSize: FS, background: 'none', border: 'none', textAlign: 'left', fontFamily: FONT, width: '100%' }
+    const S = { color: '#fff', cursor: 'pointer', padding: '4px 0', fontSize: FS, background: 'none', border: 'none', textAlign: 'left', fontFamily: FONT, width: '100%', whiteSpace: 'normal', wordBreak: 'break-all' }
     const SI = { ...S, paddingLeft: '1em' }  // インデントつきスタイル
 
     /* ── ゲームオーバー ── */
@@ -1339,11 +1358,11 @@ export default function App() {
 
                 {/* アスペクト比拘束ゲーム画面（黒帯でレターボックス表示） */}
                 <div style={{ width: 'min(100vw, calc(100dvh * 16 / 9))', height: 'min(100dvh, calc(100vw * 9 / 16))', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', zIndex: 1 }}>
-                <div style={{ display: 'flex', flex: 1, height: '100%', width: '100%', padding: '12px 16px', gap: 16, zIndex: 10, boxSizing: 'border-box', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', flex: 1, height: '100%', width: '100%', padding: '6px 8px', gap: 10, zIndex: 10, boxSizing: 'border-box', overflow: 'hidden' }}>
                     {/* 左カラム: 画像（またはちんちろ）＋ログ */}
-                    <div style={{ flex: '5.5', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <div style={{ flex: 7, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                         {subMenu === 'chinchiro' && chinchiro ? (
-                            <div style={{ flexShrink: 0, maxHeight: '55%', aspectRatio: '4/3', margin: '0 auto', background: '#000', position: 'relative', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 4, padding: 4, boxSizing: 'border-box' }}>
+                            <div style={{ flexShrink: 0, width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 4, padding: 4, boxSizing: 'border-box' }}>
                                 {chinchiro.players.map((p, i) => {
                                     const isOya = i === chinchiro.oyaIndex
                                     const isActive = i === chinchiro.activePlayerIndex && chinchiro.phase === 'rolling'
@@ -1384,8 +1403,8 @@ export default function App() {
                                 })}
                             </div>
                         ) : (
-                            <div style={{ flexShrink: 0, maxHeight: '55%', minHeight: '35%', aspectRatio: '4/3', margin: '0 auto', background: '#000', position: 'relative', overflow: 'hidden' }}>
-                                <img src={bgImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', filter: weatherFilter }} />
+                            <div style={{ flexShrink: 0, width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', overflow: 'hidden' }}>
+                                <img src={bgImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', imageRendering: 'pixelated', filter: weatherFilter }} />
                                 {weatherOverlay === 'rain' && <div className="rain-overlay" />}
                                 {showFireworks && (
                                     <img
@@ -1397,8 +1416,8 @@ export default function App() {
                                 {upgradeFlash && <div className="upgrade-flash" />}
                             </div>
                         )}
-                        {/* ログ: 画像の直下に固定（1行分余白） */}
-                        <div style={{ flex: 1, marginTop: '2dvh', overflowY: 'auto', paddingBottom: '16px' }}>
+                        {/* ログ: 画像の直下 */}
+                        <div style={{ flex: 1, marginTop: 4, overflowY: 'auto', paddingBottom: 4 }}>
                             {workLog && <div style={{ color: '#ffb000', fontSize: FS, lineHeight: 2, letterSpacing: 2 }}>{workLog}</div>}
                             <TypewriterTextArea logs={logs} logColor={logColor} />
                             {isProcessing && <div style={{ color: '#fff' }} className="animate-blink">▼</div>}
@@ -1406,12 +1425,19 @@ export default function App() {
                     </div>
 
                     {/* 右カラム: 日時・天気・コマンド */}
-                    <div style={{ flex: '4.5', display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4, minWidth: 0, overflow: 'hidden' }}>
-                        <div style={{ color: '#fff', marginBottom: 16, lineHeight: 1.8, fontSize: FS }}>
+                    <div style={{ flex: 3, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden' }}>
+                        <div style={{ color: '#fff', marginBottom: 6, lineHeight: 1.6, fontSize: 13, flexShrink: 0 }}>
                             <div>{dateStr}　{timeStr}</div>
                             <div>{weatherStr}　{tempStr}</div>
                         </div>
-                        <div style={{ flex: 1, overflowY: 'auto' }}>{renderRight()}</div>
+                        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                            <div ref={rightCmdRef} style={{ height: '100%', overflowY: 'auto' }}>{renderRight()}</div>
+                            {rightShowScroll && (
+                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, pointerEvents: 'none', textAlign: 'center', paddingTop: 12, background: 'linear-gradient(transparent, #000)' }}>
+                                    <span className="animate-blink" style={{ color: '#fff', fontSize: 14 }}>▼</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 </div>{/* /game-screen */}
