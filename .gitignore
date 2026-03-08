@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Vite cache
+.vite/
+
+# Misc
+.DS_Store
+*.local
+
+# API keys / env
+.env
+.env.*
+!.env.example
+
+# Dev artifacts
+backup/
+.claude/
+memo.md
+memo.txt
+skillsmemo.md
+file
+image/

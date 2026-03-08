@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+@theme {
+    --color-retro-bg: #000000;
+    --color-retro-panel: #1e1e1e;
+    --color-retro-border: #ffffff;
+    --color-retro-green: #33ff33;
+    --color-retro-amber: #ffb000;
+    --color-retro-cyan: #00ffff;
+    --color-retro-red: #ff3333;
+    --color-retro-darkbg: #0a0a0a;
+
+    --font-dot: "DotGothic16", sans-serif;
+}
+
+@layer base {
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background-color: #1a1a1a;
+        color: #fff;
+        font-family: 'DotGothic16', sans-serif;
+    }
+
+    #root {
+        height: 100%;
+    }
+}
+
+/* =========================================
+ *  CRT & Retro Effects
+ * ========================================= */
+.crt-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%,
+            rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.crt-vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle,
+            rgba(0, 0, 0, 0) 50%,
+            rgba(0, 0, 0, 0.5) 100%);
+    z-index: 101;
+    pointer-events: none;
+}
+
+/* =========================================
+ *  Animations
+ * ========================================= */
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+.animate-blink {
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes fireworks-pulse {
+    0%   { opacity: 0.4; transform: scale(1.00); }
+    40%  { opacity: 0.85; transform: scale(1.02); }
+    70%  { opacity: 0.65; transform: scale(1.01); }
+    100% { opacity: 0.4; transform: scale(1.00); }
+}
+
+@keyframes glitch {
+    0% {
+        transform: translate(0)
+    }
+
+    20% {
+        transform: translate(-2px, 2px)
+    }
+
+    40% {
+        transform: translate(-2px, -2px)
+    }
+
+    60% {
+        transform: translate(2px, 2px)
+    }
+
+    80% {
+        transform: translate(2px, -2px)
+    }
+
+    100% {
+        transform: translate(0)
+    }
+}
+
+.gameover-glitch {
+    animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+    color: red;
+}
+
+/* =========================================
+ *  Font & Pixel Art 
+ * ========================================= */
+.pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+/* Scrollbar styling for retro feel */
+.log-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-scroll::-webkit-scrollbar-track {
+    background: #000;
+    border-left: 1px solid #333;
+}
+
+.log-scroll::-webkit-scrollbar-thumb {
+    background: #555;
+    border: 1px solid #000;
+}
+
+.log-scroll::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Rain overlay animation */
+.rain-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(to bottom,
+            transparent 0px,
+            transparent 8px,
+            rgba(150, 180, 255, 0.12) 8px,
+            rgba(150, 180, 255, 0.12) 10px);
+    animation: rain-fall 0.4s linear infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes rain-fall {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: -4px 20px;
+    }
+}
+
+/* ── 拠点アップグレード フラッシュ ── */
+@keyframes upgrade-flash {
+    0%   { opacity: 0; }
+    15%  { opacity: 0.85; }
+    100% { opacity: 0; }
+}
+
+.upgrade-flash {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(51, 255, 51, 0.65);
+    animation: upgrade-flash 0.75s ease-out forwards;
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* ── タイトルメニューボタン ── */
+.title-menu-btn {
+    display: block;
+    background: transparent;
+    border: 1px solid #444;
+    color: #aaa;
+    font-family: 'DotGothic16', sans-serif;
+    font-size: 18px;
+    letter-spacing: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: color 0.1s, border-color 0.1s, background 0.08s;
+}
+
+.title-menu-btn:hover {
+    color: #33ff33;
+    border-color: #33ff33;
+    background: rgba(51, 255, 51, 0.06);
+}
