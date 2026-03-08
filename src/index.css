@@ -29,6 +29,12 @@
 
     #root {
         height: 100dvh;
+        /* ノッチ・ホームバーのセーフエリアを考慮 */
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
     }
 }
 

@@ -91,55 +91,64 @@ const TypewriterTextArea = ({ logs, logColor }) => {
 function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
     return (
         <>
-        <div className="portrait-warning">
-            <div style={{ fontSize: 36 }}>↻</div>
-            <div>スマホを横にしてください</div>
-            <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
-        </div>
-        <div style={{
-            position: 'fixed', inset: 0, background: '#000',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            fontFamily: FONT, userSelect: 'none',
-        }}>
-            <div className="crt-overlay" />
-            <div className="crt-vignette" />
-
+            <div className="portrait-warning">
+                <div style={{ fontSize: 36 }}>↻</div>
+                <div>スマホを横にしてください</div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
+            </div>
             <div style={{
-                position: 'relative', zIndex: 10, width: '100%', maxWidth: 480,
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                padding: '0 16px', boxSizing: 'border-box',
+                position: 'fixed', inset: 0, background: '#000',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                fontFamily: FONT, userSelect: 'none', height: '100dvh', overflow: 'hidden',
             }}>
-                {/* AI生成タイトル画像 */}
-                <img
-                    src="/img/title.png"
-                    alt="HOMELESS SIMULATOR"
-                    style={{ width: '100%', height: 'auto', imageRendering: 'pixelated', display: 'block' }}
-                />
+                <div className="crt-overlay" />
+                <div className="crt-vignette" />
 
-                {/* TOUCH TO START（点滅） */}
-                {screen === 'title' && (
-                    <div
-                        onClick={onStart}
-                        className="animate-blink"
-                        style={{ color: '#fff', fontSize: 18, marginTop: 22, cursor: 'pointer', letterSpacing: 7, padding: '6px 0' }}
-                    >
-                        TOUCH TO START
+                <div style={{
+                    position: 'relative', zIndex: 10, width: '100%', maxWidth: 480, height: '100dvh',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 16px', boxSizing: 'border-box',
+                }}>
+                    {/* AI生成タイトル画像 */}
+                    <img
+                        src="/img/title.png"
+                        alt="HOMELESS SIMULATOR"
+                        style={{ width: '100%', maxHeight: '55dvh', objectFit: 'contain', imageRendering: 'pixelated', display: 'block' }}
+                    />
+
+                    {/* TOUCH TO START（点滅） */}
+                    {screen === 'title' && (
+                        <div
+                            onClick={onStart}
+                            className="animate-blink"
+                            style={{ color: '#fff', fontSize: 18, marginTop: '6dvh', cursor: 'pointer', letterSpacing: 7, padding: '12px 0', fontWeight: 'bold' }}
+                        >
+                            TOUCH TO START
+                        </div>
+                    )}
+
+                    {/* タイトルメニュー */}
+                    {screen === 'menu' && (
+                        <div style={{ width: '82%', marginTop: '4dvh', display: 'flex', flexDirection: 'column', gap: '2dvh' }}>
+                            <button onClick={onNewGame} className="title-menu-btn">▶  NEW GAME</button>
+                            {hasSave && <button onClick={onContinue} className="title-menu-btn">▶  CONTINUE</button>}
+                        </div>
+                    )}
+
+                    <div style={{ color: '#242424', fontSize: 11, marginTop: 14, letterSpacing: 2 }}>
+                        © 2025  HOMELESS SIMULATOR
                     </div>
-                )}
 
-                {/* タイトルメニュー */}
-                {screen === 'menu' && (
-                    <div style={{ width: '82%', marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <button onClick={onNewGame} className="title-menu-btn">▶  NEW GAME</button>
-                        {hasSave && <button onClick={onContinue} className="title-menu-btn">▶  CONTINUE</button>}
-                    </div>
-                )}
-
-                <div style={{ color: '#242424', fontSize: 11, marginTop: 14, letterSpacing: 2 }}>
-                    © 2025  HOMELESS SIMULATOR
+                    {/* PWAインストール案内（ブラウザで開いているときのみ表示） */}
+                    {!window.matchMedia('(display-mode: fullscreen)').matches &&
+                     !window.matchMedia('(display-mode: standalone)').matches &&
+                     !window.navigator.standalone && (
+                        <div style={{ color: '#555', fontSize: 11, marginTop: 10, textAlign: 'center', lineHeight: 1.8, letterSpacing: 1 }}>
+                            📲 スマホは「ホーム画面に追加」すると<br />URLバーが消えてフルスクリーンになります
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
         </>
     )
 }
@@ -600,11 +609,11 @@ export default function App() {
         soundManager.playOpeningBGM()
         // フルスクリーン化
         if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => {})
+            document.documentElement.requestFullscreen().catch(() => { })
         }
         // 横画面ロック
         if (window.screen?.orientation?.lock) {
-            window.screen.orientation.lock('landscape').catch(() => {})
+            window.screen.orientation.lock('landscape').catch(() => { })
         }
         setScreen('menu')
     }
@@ -1320,91 +1329,94 @@ export default function App() {
 
     return (
         <>
-        <div className="portrait-warning">
-            <div style={{ fontSize: 36 }}>↻</div>
-            <div>スマホを横にしてください</div>
-            <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
-        </div>
-        <div onClick={() => soundManager.enable()} style={{ height: '100%', display: 'flex', flexDirection: 'column', fontFamily: FONT, fontSize: FS, userSelect: 'none', position: 'relative', background: '#000' }}>
-            <div className="crt-overlay" /><div className="crt-vignette" />
-
-            <div style={{ display: 'flex', flex: 1, maxWidth: 860, width: '100%', margin: '0 auto', padding: '16px 16px 16px 16px', gap: 24, zIndex: 10 }}>
-                {/* 左カラム: 画像（またはちんちろ）＋ログ */}
-                <div style={{ width: '58%', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-                    {subMenu === 'chinchiro' && chinchiro ? (
-                        <div style={{ aspectRatio: '4/3', background: '#000', position: 'relative', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 4, padding: 4, boxSizing: 'border-box' }}>
-                            {chinchiro.players.map((p, i) => {
-                                const isOya = i === chinchiro.oyaIndex
-                                const isActive = i === chinchiro.activePlayerIndex && chinchiro.phase === 'rolling'
-                                const rolls = chinchiro.rolls[p.id] || []
-                                const bet = chinchiro.bets[p.id]
-                                const bg = isActive ? '#1a2a1a' : '#111'
-                                const border = isActive ? '2px solid #33ff33' : '1px solid #333'
-                                const animDice = isActive && diceAnim
-                                const getYakuColor = (rank) => {
-                                    if (!rank || rank <= 5) return '#fff'
-                                    if (rank === 10) return '#ff3333'
-                                    if (rank <= 60) return '#fff'
-                                    if (rank === 80) return '#ffb000'
-                                    if (rank === 90) return '#00ffff'
-                                    if (rank === 100) return '#ff00ff'
-                                    return '#fff'
-                                }
-                                const DiceFace = ({ value, size = 28 }) => {
-                                    const dots = { 1: [[1, 1]], 2: [[0, 2], [2, 0]], 3: [[0, 2], [1, 1], [2, 0]], 4: [[0, 0], [0, 2], [2, 0], [2, 2]], 5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]], 6: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]] }
-                                    return <div style={{ width: size, height: size, background: '#fff', borderRadius: 3, border: '1px solid #555', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', padding: 2, boxSizing: 'border-box' }}>
-                                        {[0, 1, 2].map(r => [0, 1, 2].map(c => { const has = (dots[value] || []).some(([dc, dr]) => dr === r && dc === c); return <div key={`${r}${c}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{has && <div style={{ width: size * 0.18, height: size * 0.18, borderRadius: '50%', background: value === 1 ? '#cc0000' : '#111' }} />}</div> }))}
-                                    </div>
-                                }
-                                return (
-                                    <div key={p.id} style={{ background: bg, border, borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, overflow: 'hidden' }}>
-                                        <div style={{ color: p.isHuman ? '#33ff33' : '#ffb000', fontSize: FS, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                                            {isOya ? '(親)' : '(子)'}{p.name}: ¥{p.yen}
-                                        </div>
-                                        {[0, 1, 2].map(ri => {
-                                            const roll = rolls[ri]
-                                            if (roll) return <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{roll.dice.map((d, j) => <DiceFace key={j} value={d} />)}<span style={{ color: roll.result.settled ? getYakuColor(roll.result.rank) : '#888', fontSize: FS, marginLeft: 4, fontWeight: 'bold' }}>{roll.result.settled ? roll.result.name : 'メナシ'}</span></div>
-                                            if (animDice && ri === rolls.length) return <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{animDice.map((d, j) => <DiceFace key={j} value={d} />)}<span style={{ color: '#555', fontSize: FS }}>...</span></div>
-                                            return <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 28 }}>{[0, 1, 2].map(j => <div key={j} style={{ width: 28, height: 28, border: '1px dashed #333', borderRadius: 3 }} />)}</div>
-                                        })}
-                                        {bet !== undefined && <div style={{ color: '#ffb000', fontSize: FS, fontWeight: 'bold' }}>かけきん: ¥{bet || 0}</div>}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    ) : (
-                        <div style={{ aspectRatio: '4/3', background: '#000', position: 'relative', overflow: 'hidden' }}>
-                            <img src={bgImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', imageRendering: 'pixelated', filter: weatherFilter }} />
-                            {weatherOverlay === 'rain' && <div className="rain-overlay" />}
-                            {showFireworks && (
-                                <img
-                                    src="/image/fireworks_with_city_8bit_cheap_1772717518927.png"
-                                    alt=""
-                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', imageRendering: 'pixelated', opacity: 0.75, animation: 'fireworks-pulse 2.5s ease-in-out infinite' }}
-                                />
-                            )}
-                            {upgradeFlash && <div className="upgrade-flash" />}
-                        </div>
-                    )}
-                    {/* ログ: 画像の直下に固定（1行分余白） */}
-                    <div style={{ marginTop: FS }}>
-                        {workLog && <div style={{ color: '#ffb000', fontSize: FS, lineHeight: 2, letterSpacing: 2 }}>{workLog}</div>}
-                        <TypewriterTextArea logs={logs} logColor={logColor} />
-                        {isProcessing && <div style={{ color: '#fff' }} className="animate-blink">▼</div>}
-                    </div>
-                </div>
-
-                {/* 右カラム: 日時・天気・コマンド */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingTop: 4, minWidth: 0 }}>
-                    <div style={{ color: '#fff', marginBottom: 16, lineHeight: 1.8, fontSize: FS }}>
-                        <div>{dateStr}　{timeStr}</div>
-                        <div>{weatherStr}　{tempStr}</div>
-                    </div>
-                    <div style={{ flex: 1, overflowY: 'auto' }}>{renderRight()}</div>
-                </div>
+            <div className="portrait-warning">
+                <div style={{ fontSize: 36 }}>↻</div>
+                <div>スマホを横にしてください</div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
             </div>
+            <div onClick={() => soundManager.enable()} style={{ width: '100vw', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontSize: FS, userSelect: 'none', position: 'relative', background: '#000', overflow: 'hidden' }}>
+                <div className="crt-overlay" /><div className="crt-vignette" />
 
-        </div>
+                {/* アスペクト比拘束ゲーム画面（黒帯でレターボックス表示） */}
+                <div style={{ width: 'min(100vw, calc(100dvh * 16 / 9))', height: 'min(100dvh, calc(100vw * 9 / 16))', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', zIndex: 1 }}>
+                <div style={{ display: 'flex', flex: 1, height: '100%', width: '100%', padding: '12px 16px', gap: 16, zIndex: 10, boxSizing: 'border-box', overflow: 'hidden' }}>
+                    {/* 左カラム: 画像（またはちんちろ）＋ログ */}
+                    <div style={{ flex: '5.5', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                        {subMenu === 'chinchiro' && chinchiro ? (
+                            <div style={{ flexShrink: 0, maxHeight: '55%', aspectRatio: '4/3', margin: '0 auto', background: '#000', position: 'relative', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 4, padding: 4, boxSizing: 'border-box' }}>
+                                {chinchiro.players.map((p, i) => {
+                                    const isOya = i === chinchiro.oyaIndex
+                                    const isActive = i === chinchiro.activePlayerIndex && chinchiro.phase === 'rolling'
+                                    const rolls = chinchiro.rolls[p.id] || []
+                                    const bet = chinchiro.bets[p.id]
+                                    const bg = isActive ? '#1a2a1a' : '#111'
+                                    const border = isActive ? '2px solid #33ff33' : '1px solid #333'
+                                    const animDice = isActive && diceAnim
+                                    const getYakuColor = (rank) => {
+                                        if (!rank || rank <= 5) return '#fff'
+                                        if (rank === 10) return '#ff3333'
+                                        if (rank <= 60) return '#fff'
+                                        if (rank === 80) return '#ffb000'
+                                        if (rank === 90) return '#00ffff'
+                                        if (rank === 100) return '#ff00ff'
+                                        return '#fff'
+                                    }
+                                    const DiceFace = ({ value, size = 28 }) => {
+                                        const dots = { 1: [[1, 1]], 2: [[0, 2], [2, 0]], 3: [[0, 2], [1, 1], [2, 0]], 4: [[0, 0], [0, 2], [2, 0], [2, 2]], 5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]], 6: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]] }
+                                        return <div style={{ width: size, height: size, background: '#fff', borderRadius: 3, border: '1px solid #555', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', padding: 2, boxSizing: 'border-box' }}>
+                                            {[0, 1, 2].map(r => [0, 1, 2].map(c => { const has = (dots[value] || []).some(([dc, dr]) => dr === r && dc === c); return <div key={`${r}${c}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{has && <div style={{ width: size * 0.18, height: size * 0.18, borderRadius: '50%', background: value === 1 ? '#cc0000' : '#111' }} />}</div> }))}
+                                        </div>
+                                    }
+                                    return (
+                                        <div key={p.id} style={{ background: bg, border, borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, overflow: 'hidden' }}>
+                                            <div style={{ color: p.isHuman ? '#33ff33' : '#ffb000', fontSize: FS, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                                                {isOya ? '(親)' : '(子)'}{p.name}: ¥{p.yen}
+                                            </div>
+                                            {[0, 1, 2].map(ri => {
+                                                const roll = rolls[ri]
+                                                if (roll) return <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{roll.dice.map((d, j) => <DiceFace key={j} value={d} />)}<span style={{ color: roll.result.settled ? getYakuColor(roll.result.rank) : '#888', fontSize: FS, marginLeft: 4, fontWeight: 'bold' }}>{roll.result.settled ? roll.result.name : 'メナシ'}</span></div>
+                                                if (animDice && ri === rolls.length) return <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{animDice.map((d, j) => <DiceFace key={j} value={d} />)}<span style={{ color: '#555', fontSize: FS }}>...</span></div>
+                                                return <div key={ri} style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 28 }}>{[0, 1, 2].map(j => <div key={j} style={{ width: 28, height: 28, border: '1px dashed #333', borderRadius: 3 }} />)}</div>
+                                            })}
+                                            {bet !== undefined && <div style={{ color: '#ffb000', fontSize: FS, fontWeight: 'bold' }}>かけきん: ¥{bet || 0}</div>}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ flexShrink: 0, maxHeight: '55%', minHeight: '35%', aspectRatio: '4/3', margin: '0 auto', background: '#000', position: 'relative', overflow: 'hidden' }}>
+                                <img src={bgImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', filter: weatherFilter }} />
+                                {weatherOverlay === 'rain' && <div className="rain-overlay" />}
+                                {showFireworks && (
+                                    <img
+                                        src="/image/fireworks_with_city_8bit_cheap_1772717518927.png"
+                                        alt=""
+                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', imageRendering: 'pixelated', opacity: 0.75, animation: 'fireworks-pulse 2.5s ease-in-out infinite' }}
+                                    />
+                                )}
+                                {upgradeFlash && <div className="upgrade-flash" />}
+                            </div>
+                        )}
+                        {/* ログ: 画像の直下に固定（1行分余白） */}
+                        <div style={{ flex: 1, marginTop: '2dvh', overflowY: 'auto', paddingBottom: '16px' }}>
+                            {workLog && <div style={{ color: '#ffb000', fontSize: FS, lineHeight: 2, letterSpacing: 2 }}>{workLog}</div>}
+                            <TypewriterTextArea logs={logs} logColor={logColor} />
+                            {isProcessing && <div style={{ color: '#fff' }} className="animate-blink">▼</div>}
+                        </div>
+                    </div>
+
+                    {/* 右カラム: 日時・天気・コマンド */}
+                    <div style={{ flex: '4.5', display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4, minWidth: 0, overflow: 'hidden' }}>
+                        <div style={{ color: '#fff', marginBottom: 16, lineHeight: 1.8, fontSize: FS }}>
+                            <div>{dateStr}　{timeStr}</div>
+                            <div>{weatherStr}　{tempStr}</div>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto' }}>{renderRight()}</div>
+                    </div>
+                </div>
+                </div>{/* /game-screen */}
+
+            </div>
         </>
     )
 }
