@@ -1401,7 +1401,7 @@ export default function App() {
             )
         }
         if (subMenu === 'veteran_chat') {
-            const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''
+            // API呼び出しはサーバーサイドプロキシ経由（ブラウザからの直接呼び出しはCORSエラー）
             const buildSystemPrompt = () => `あなたは東京・新宿の公園にいる70代のホームレスの老人NPCです。
 キャラクター：長年この公園で生き抜いてきた古参ホームレス。無口で気難しいが、同じホームレス仲間には時折ぼそっと本音を語る。元々は普通の労働者だったが、様々な事情でここにたどり着いた。
 返答ルール：
@@ -1440,10 +1440,11 @@ export default function App() {
                     generationConfig: { maxOutputTokens: 200, temperature: 0.9 }
                 }
                 try {
-                    const res = await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-                        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-                    )
+                    const res = await fetch('/api/veteran', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    })
                     const data = await res.json()
                     if (data.error) throw new Error(data.error.message)
                     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ベテランは だまっている。'
