@@ -922,7 +922,7 @@ export default function App() {
                             {next.requires?.bluesheet && (
                                 <div style={{ color: '#aaa', fontSize: FS }}>{INDENT}（もち: ブルーシート {gameState.materials?.bluesheet || 0}まい）</div>
                             )}
-                            <button onClick={handleBaseUpgrade} disabled={!canUp} style={{ ...SI, color: canUp ? '#fff' : '#555' }}>{INDENT}アップグレード</button>
+                            <button onClick={handleBaseUpgrade} disabled={!canUp} className={canUp ? 'animate-blink' : ''} style={{ ...SI, color: canUp ? '#33ff33' : '#555' }}>{INDENT}アップグレード</button>
                         </>
                     ) : <div style={{ color: '#aaa', fontSize: FS }}>{INDENT}さいだいレベル</div>}
                     {gameState.baseLevel >= 1 && (
