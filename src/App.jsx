@@ -89,10 +89,28 @@ const TypewriterTextArea = ({ logs, logColor }) => {
  *  タイトル画面コンポーネント
  * ═══════════════════════════════════════════════════ */
 function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
+    const [showFsBtn, setShowFsBtn] = useState(!document.fullscreenElement)
+
     useEffect(() => {
         // タイトル表示直後にフルスクリーンを試行（対応ブラウザのみ有効）
         document.documentElement.requestFullscreen().catch(() => { })
     }, [])
+
+    useEffect(() => {
+        const update = () => setShowFsBtn(!document.fullscreenElement)
+        document.addEventListener('fullscreenchange', update)
+        window.addEventListener('resize', update)
+        return () => {
+            document.removeEventListener('fullscreenchange', update)
+            window.removeEventListener('resize', update)
+        }
+    }, [])
+
+    const handleFsBtn = () => {
+        document.documentElement.requestFullscreen()
+            .then(() => setShowFsBtn(false))
+            .catch(() => { })
+    }
 
     return (
         <>
@@ -101,6 +119,21 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                 <div>スマホを横にしてください</div>
                 <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
             </div>
+
+            {/* フルスクリーン回復ボタン（URLバーが出ているとき） */}
+            {showFsBtn && (
+                <button
+                    onClick={handleFsBtn}
+                    className="animate-blink"
+                    style={{
+                        position: 'fixed', top: 8, left: 8, zIndex: 9999,
+                        background: '#c00', border: 'none', color: '#fff',
+                        width: 32, height: 32, fontSize: 18, cursor: 'pointer',
+                        borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                >▲</button>
+            )}
+
             <div style={{
                 position: 'fixed', inset: 0, background: '#000',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -118,7 +151,7 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                     <img
                         src="/img/title.png"
                         alt="HOMELESS SIMULATOR"
-                        style={{ width: '100%', maxHeight: '55dvh', objectFit: 'contain', imageRendering: 'pixelated', display: 'block' }}
+                        style={{ width: '100%', maxHeight: '70dvh', objectFit: 'contain', imageRendering: 'pixelated', display: 'block' }}
                     />
 
                     {/* TOUCH TO START（点滅） */}
@@ -126,7 +159,7 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                         <div
                             onClick={onStart}
                             className="animate-blink"
-                            style={{ color: '#fff', fontSize: 18, marginTop: '6dvh', cursor: 'pointer', letterSpacing: 7, padding: '12px 0', fontWeight: 'bold' }}
+                            style={{ color: '#fff', fontSize: 18, marginTop: '4dvh', cursor: 'pointer', letterSpacing: 7, padding: '12px 0', fontWeight: 'bold' }}
                         >
                             TOUCH TO START
                         </div>
@@ -134,15 +167,11 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
 
                     {/* タイトルメニュー */}
                     {screen === 'menu' && (
-                        <div style={{ width: '82%', marginTop: '4dvh', display: 'flex', flexDirection: 'column', gap: '2dvh' }}>
+                        <div style={{ width: '82%', marginTop: '3dvh', display: 'flex', flexDirection: 'column', gap: '2dvh' }}>
                             <button onClick={onNewGame} className="title-menu-btn">▶  NEW GAME</button>
                             {hasSave && <button onClick={onContinue} className="title-menu-btn">▶  CONTINUE</button>}
                         </div>
                     )}
-
-                    <div style={{ color: '#242424', fontSize: 11, marginTop: 14, letterSpacing: 2 }}>
-                        © 2025  HOMELESS SIMULATOR
-                    </div>
 
                     {/* PWAインストール案内（ブラウザで開いているときのみ表示） */}
                     {!window.matchMedia('(display-mode: fullscreen)').matches &&
@@ -202,8 +231,28 @@ export default function App() {
     const rightCmdRef = useRef(null)
     const [rightShowScroll, setRightShowScroll] = useState(false)
 
+    // ログエリアスクロール制御
+    const logAreaRef = useRef(null)
+    const [logShowScrollUp, setLogShowScrollUp] = useState(false)
+    const [logShowScrollDown, setLogShowScrollDown] = useState(false)
+
     const setRecentLogs = useCallback((nl) => setLogs(nl.slice(-5)), [])
     const addLogs = useCallback((nl) => setLogs(prev => [...prev, ...nl].slice(-5)), [])
+
+    const updateLogScroll = useCallback(() => {
+        const el = logAreaRef.current
+        if (!el) return
+        setLogShowScrollUp(el.scrollTop > 2)
+        setLogShowScrollDown(el.scrollHeight > el.clientHeight + el.scrollTop + 2)
+    }, [])
+
+    // ログ更新時に最下部へ自動スクロール
+    useEffect(() => {
+        const el = logAreaRef.current
+        if (!el) return
+        el.scrollTop = el.scrollHeight
+        updateLogScroll()
+    }, [logs, updateLogScroll])
 
     /* ── サイコロSE ── */
     const playDiceSE = useCallback(() => {
@@ -307,12 +356,11 @@ export default function App() {
             chinchiro.players.forEach(p => {
                 const c = chinchiro.comments[p.id]
                 const pAmt = chinchiro.payouts[p.id]
-                if (c) newLogs.push({ text: `${p.name}「${c}」`, type: 'narration' })
-                if (pAmt !== undefined) {
-                    const sign = pAmt > 0 ? '+' : ''
-                    const type = pAmt > 0 ? 'chinchiro_win' : pAmt < 0 ? 'chinchiro_lose' : 'system'
-                    newLogs.push({ text: `  しょじきん: ${sign}¥${pAmt}`, type })
-                }
+                if (c === undefined) return
+                const sign = pAmt > 0 ? '+' : ''
+                const type = pAmt > 0 ? 'chinchiro_win' : pAmt < 0 ? 'chinchiro_lose' : 'system'
+                const amtStr = pAmt !== undefined ? `　${sign}¥${pAmt}` : ''
+                newLogs.push({ text: `${p.name}「${c}」${amtStr}`, type })
             })
         } else {
             newLogs = entries.map(([pid, comment]) => {
@@ -881,7 +929,7 @@ export default function App() {
                             return
                         }
                         const dayKey = getChinchiroDayKey()
-                        const startYen = (gameState.chinchiroDayKey === dayKey && gameState.chinchiroYen !== null)
+                        const startYen = (gameState.chinchiroDayKey === dayKey && gameState.chinchiroYen != null)
                             ? gameState.chinchiroYen
                             : gameState.status.yen
                         const g = initChinchiro(startYen)
@@ -1417,10 +1465,29 @@ export default function App() {
                             </div>
                         )}
                         {/* ログ: 画像の直下 */}
-                        <div style={{ flex: 1, marginTop: 4, overflowY: 'auto', paddingBottom: 4 }}>
-                            {workLog && <div style={{ color: '#ffb000', fontSize: FS, lineHeight: 2, letterSpacing: 2 }}>{workLog}</div>}
-                            <TypewriterTextArea logs={logs} logColor={logColor} />
-                            {isProcessing && <div style={{ color: '#fff' }} className="animate-blink">▼</div>}
+                        <div style={{ flex: 1, marginTop: 4, position: 'relative', overflow: 'hidden' }}>
+                            <div
+                                ref={logAreaRef}
+                                onScroll={updateLogScroll}
+                                style={{
+                                    height: '100%', overflowY: 'auto', paddingBottom: 4,
+                                    maxHeight: subMenu === 'chinchiro' ? `${3 * 2 * FS}px` : undefined,
+                                }}
+                            >
+                                {workLog && <div style={{ color: '#ffb000', fontSize: FS, lineHeight: 2, letterSpacing: 2 }}>{workLog}</div>}
+                                <TypewriterTextArea logs={logs} logColor={logColor} />
+                                {isProcessing && <div style={{ color: '#fff' }} className="animate-blink">▼</div>}
+                            </div>
+                            {logShowScrollUp && (
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none', textAlign: 'center', background: 'linear-gradient(#000, transparent)', paddingBottom: 4 }}>
+                                    <span className="animate-blink" style={{ color: '#fff', fontSize: 12 }}>▲</span>
+                                </div>
+                            )}
+                            {logShowScrollDown && (
+                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, pointerEvents: 'none', textAlign: 'center', background: 'linear-gradient(transparent, #000)', paddingTop: 4 }}>
+                                    <span className="animate-blink" style={{ color: '#fff', fontSize: 12 }}>▼</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
