@@ -7,12 +7,12 @@ API_KEY = "AIzaSyABMc5V2kCw6OqSRfpTH_lmxwEtwyFtG7o"
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "../public/image/npc/veteran.png")
 
 PROMPT = (
-    "NES Famicom 8-bit pixel art sprite of a weathered homeless Japanese man in his 70s. "
-    "He is sitting on a park bench, wearing dirty layered clothes, old coat, worn-out shoes. "
-    "Wrinkled face, stubble, tired but sharp eyes that hint at past wisdom. "
-    "Full body character sprite, transparent background, facing slightly left, "
-    "Shinjuku park setting. Limited 16-color NES palette. "
-    "Pixel art style, crisp edges, no anti-aliasing. Retro RPG NPC character."
+    "NES Famicom 8-bit pixel art sprite of a weathered homeless Japanese old man in his 70s, "
+    "standing upright. Wearing dirty layered clothes, torn old coat, worn-out shoes, "
+    "wrinkled tired face with stubble, slouching slightly. "
+    "Full body standing sprite, pure white background, facing right toward viewer. "
+    "Limited 16-color NES palette. Pixel art style, crisp edges, no anti-aliasing. "
+    "Retro RPG NPC character, no bench, no background objects."
 )
 
 url = (

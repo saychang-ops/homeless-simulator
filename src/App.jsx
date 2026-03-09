@@ -547,7 +547,8 @@ export default function App() {
             case 'basho': setSubMenu('move'); setIsProcessing(false); break
             case 'hanasu': {
                 const events = getAvailableSupportEvents(gameState)
-                if (events.length > 0) { setSubMenu('support'); setIsProcessing(false); break }
+                const shouldOpenSupportMenu = events.length > 0 || (gameState.area === 'park' && veteranPresent)
+                if (shouldOpenSupportMenu) { setSubMenu('support'); setIsProcessing(false); break }
                 setTimeout(() => {
                     const r = doTalk(gameState)
                     setGameState(r.state); setRecentLogs(r.logs)
@@ -1621,8 +1622,8 @@ export default function App() {
                                         style={{
                                             position: 'absolute',
                                             bottom: 0,
-                                            right: '8%',
-                                            height: '85%',
+                                            left: '2%',
+                                            height: '70%',
                                             width: 'auto',
                                             imageRendering: 'pixelated',
                                             objectFit: 'contain',
