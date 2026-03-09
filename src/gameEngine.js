@@ -527,21 +527,26 @@ export function useItem(state, index) {
     s.inventory.splice(index, 1)
     const logs = []
     if (item.type === 'food') {
+        const prevHunger = Math.round(s.status.hunger)
+        const prevHp = Math.round(s.status.hp)
         if (item.hungerRestore) s.status.hunger = Math.min(100, s.status.hunger + item.hungerRestore)
         if (item.hpRestore) s.status.hp = Math.min(100, s.status.hp + item.hpRestore)
         logs.push({ text: `${item.name}をたべた。`, type: 'narration' })
-        if (item.hungerRestore) logs.push({ text: `くうふくが ${item.hungerRestore} かいふくした。`, type: 'narration' })
-        if (item.hpRestore) logs.push({ text: `たいりょくが ${item.hpRestore} かいふくした。`, type: 'narration' })
+        if (item.hungerRestore) logs.push({ text: `くうふくが ${item.hungerRestore} かいふくした。（${prevHunger}→${Math.round(s.status.hunger)}）`, type: 'narration' })
+        if (item.hpRestore) logs.push({ text: `たいりょくが ${item.hpRestore} かいふくした。（${prevHp}→${Math.round(s.status.hp)}）`, type: 'narration' })
         if (item.feelsBonus) {
             s.status.temp = Math.min(37.5, s.status.temp + item.feelsBonus * 0.3)
             logs.push({ text: `ぽかぽか あたたまりました！ からだのおんど が ${item.feelsBonus}ど あがりました。`, type: 'narration' })
         }
     } else if (item.type === 'drink') {
+        const prevHungerD = Math.round(s.status.hunger)
+        const prevHpD = Math.round(s.status.hp)
         if (item.hungerRestore) s.status.hunger = Math.min(100, s.status.hunger + item.hungerRestore)
         if (item.hpRestore) s.status.hp = Math.min(100, s.status.hp + item.hpRestore)
         if (item.feelsBonus) s.status.temp = Math.min(37.5, s.status.temp + item.feelsBonus * 0.3)
         logs.push({ text: `${item.name}をのんだ。`, type: 'narration' })
-        if (item.hpRestore) logs.push({ text: `たいりょくが ${item.hpRestore} かいふくした。`, type: 'narration' })
+        if (item.hungerRestore) logs.push({ text: `くうふくが ${item.hungerRestore} かいふくした。（${prevHungerD}→${Math.round(s.status.hunger)}）`, type: 'narration' })
+        if (item.hpRestore) logs.push({ text: `たいりょくが ${item.hpRestore} かいふくした。（${prevHpD}→${Math.round(s.status.hp)}）`, type: 'narration' })
         if (item.feelsBonus) logs.push({ text: `ぽかぽか あたたまった！ たいかんおんどが +${item.feelsBonus}℃`, type: 'narration' })
     } else if (item.type === 'equip_newspaper') {
         // 新聞紙は clothing スロットを使わず newspaperEquipTime で独立管理
