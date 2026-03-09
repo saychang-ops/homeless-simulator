@@ -240,6 +240,7 @@ export default function App() {
     const [gameOverTime, setGameOverTime] = useState(null)
     const [veteranChatHistory, setVeteranChatHistory] = useState([]) // [{role:'user'|'model', text}]
     const [veteranLoading, setVeteranLoading] = useState(false)
+    const [veteranAbsentUntil, setVeteranAbsentUntil] = useState(null) // Date.now() + ms、この時刻まで不在
 
     // タイトル画面管理
     const [screen, setScreen] = useState('title')   // 'title' | 'menu' | 'game'
@@ -808,7 +809,8 @@ export default function App() {
     const feelsLikeStr = `${gameState.status.feelsLike ?? '--'}℃`
     const weatherFilter = weatherOverlay === 'rain' ? 'brightness(0.6) contrast(1.1)' : weatherOverlay === 'cloudy' ? 'brightness(0.8) saturate(0.7)' : 'none'
     const isRainWeather = weatherData ? [2,3,5,6].includes(Math.floor(weatherData.weather.id / 100)) : false
-    const veteranPresent = gameState.area === 'park' && !isRainWeather && seededRandom(dateStr + 'veteran') >= 0.3
+    const veteranAbsent = veteranAbsentUntil && Date.now() < veteranAbsentUntil
+    const veteranPresent = gameState.area === 'park' && !isRainWeather && !veteranAbsent && seededRandom(dateStr + 'veteran') >= 0.3
 
     const S = { color: '#fff', cursor: 'pointer', padding: '4px 0', fontSize: FS, background: 'none', border: 'none', textAlign: 'left', fontFamily: FONT, width: '100%', whiteSpace: 'normal', wordBreak: 'break-all' }
     const SI = { ...S, paddingLeft: '1em' }  // インデントつきスタイル
@@ -1399,19 +1401,19 @@ export default function App() {
         }
         if (subMenu === 'veteran_chat') {
             const GEMINI_API_KEY = 'AIzaSyABMc5V2kCw6OqSRfpTH_lmxwEtwyFtG7o'
-            const buildSystemPrompt = () => `あなたは東京・新宿の公園にいる70代の元インテリ老紳士NPCです。
-キャラクター：厳格でリアリティ至上主義だが、プレイヤー（ホームレス）には親身な師として振る舞う。元官僚か大学教授。
+            const buildSystemPrompt = () => `あなたは東京・新宿の公園にいる70代のホームレスの老人NPCです。
+キャラクター：長年この公園で生き抜いてきた古参ホームレス。無口で気難しいが、同じホームレス仲間には時折ぼそっと本音を語る。元々は普通の労働者だったが、様々な事情でここにたどり着いた。
 返答ルール：
-- 必ずひらがな中心のレトロゲーム風テキストで返答すること
+- 必ずひらがな中心の短い口調で返答すること（「〜だな」「〜だろ」など老人らしい語尾）
 - 1回の返答は最大4行（改行含む）以内を厳守
-- 架空の情報は使わず、現実の新宿・東京・日本社会・歴史に基づいた会話をすること
+- 架空の情報は使わず、現実の新宿・東京の路上生活・社会に基づいた会話をすること
 ゲームシステム知識（生存術で使用）：
 - HP0でゲームオーバー。くうふく0でHP減少。えいせい25以下でにおいペナルティ。
 - 拠点アップグレード：Lv1(だんボール3個+¥500)→Lv2(ブルーシート5枚)→Lv3(テント/福引特賞)
 - 収入源：日雇い・ちんちろりん・探索
 - 銭湯¥500でえいせい+80。医療支援イベントで病気治療。
 プレイヤー現在状況：HP${gameState.status.hp}/100 くうふく${Math.round(gameState.status.hunger)}/100 えいせい${Math.round(gameState.status.hygiene)}/100 しょじきん¥${gameState.status.yen} 拠点Lv${gameState.baseLevel}
-追い出しルール：プレイヤーが失礼・不快な言動をした場合、または話し続けて飽きたと判断した場合は、返答の最後に[KICK]とだけ記せ。`
+立ち去りルール：プレイヤーが失礼・不快な言動をした場合、または話し続けて嫌気がさした場合は、返答の最後に[KICK]とだけ記せ。その後ベテランはその場を立ち去る。`
 
             const callGemini = async (userMessage, isSurvival) => {
                 setVeteranLoading(true)
@@ -1458,9 +1460,8 @@ export default function App() {
                         setTimeout(() => {
                             setSubMenu(null)
                             setVeteranChatHistory([])
-                            setRecentLogs([{ text: 'ベテランに おいだされた！ こうえんをでた。', type: 'system' }])
-                            // move to nishiguchi
-                            setGameState(prev => ({ ...prev, area: 'nishiguchi' }))
+                            setVeteranAbsentUntil(Date.now() + 30 * 60 * 1000) // 30分間不在
+                            setRecentLogs([{ text: 'ベテランは たちさった。しばらく いないだろう。', type: 'system' }])
                         }, 1500)
                     }
                 } catch {
