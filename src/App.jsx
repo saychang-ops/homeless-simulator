@@ -1446,7 +1446,7 @@ export default function App() {
                         body: JSON.stringify(body),
                     })
                     const data = await res.json()
-                    if (data.error) throw new Error(data.error.message)
+                    if (data.error) throw new Error(typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error)))
                     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ベテランは だまっている。'
                     const kicked = reply.includes('[KICK]')
                     const cleanReply = reply.replace('[KICK]', '').trim()
