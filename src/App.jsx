@@ -227,6 +227,8 @@ export default function App() {
     const [chinchiroBGM, setChinchiroBGM] = useState(null)
     const [showFireworks, setShowFireworks] = useState(false)
     const [upgradeFlash, setUpgradeFlash] = useState(false)
+    const [upgradeReveal, setUpgradeReveal] = useState(false)   // 新画像+光エフェクト
+    const [upgradeImgSrc, setUpgradeImgSrc] = useState(null)    // 表示する新拠点画像
     const [gameOverTime, setGameOverTime] = useState(null)
 
     // タイトル画面管理
@@ -662,8 +664,20 @@ export default function App() {
             setGameState(r.state)
             setRecentLogs(r.logs)
             saveGame(r.state)
-            setUpgradeFlash(true)
-            setTimeout(() => setUpgradeFlash(false), 800)
+            // 新レベルの拠点画像を取得して表示
+            const newImgRaw = BASE_LEVELS[r.state.baseLevel]?.img
+            const newImg = newImgRaw && typeof newImgRaw === 'object' ? newImgRaw[tod] : newImgRaw
+            if (newImg) {
+                setUpgradeImgSrc(newImg)
+                setUpgradeReveal(true)
+                setTimeout(() => {
+                    setUpgradeReveal(false)
+                    setTimeout(() => setUpgradeImgSrc(null), 400)
+                }, 2400)
+            } else {
+                setUpgradeFlash(true)
+                setTimeout(() => setUpgradeFlash(false), 800)
+            }
         }, 400)
     }
     const handleFoodDist = () => { const r = takeFoodDistribution(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state) }
@@ -761,7 +775,7 @@ export default function App() {
     // 拠点画像: オブジェクトなら時刻別、単一値ならそのまま
     const baseImg = baseImgRaw && typeof baseImgRaw === 'object' ? baseImgRaw[tod] : baseImgRaw
     const showBaseImg = gameState.area === 'park' && baseImg && subMenu === 'base'
-    const bgImage = showBaseImg ? baseImg : area.bg[tod]
+    const bgImage = upgradeImgSrc || (showBaseImg ? baseImg : area.bg[tod])
     const weatherOverlay = weatherData ? getWeatherOverlay(weatherData.weather.id) : 'clear'
     const weatherStr = weatherData ? weatherData.description : 'はれ'
     const tempStr = weatherData ? `${weatherData.realTemp}℃` : '--℃'
@@ -1470,6 +1484,8 @@ export default function App() {
                                     />
                                 )}
                                 {upgradeFlash && <div className="upgrade-flash" />}
+                                {upgradeReveal && <div className="upgrade-reveal" />}
+                                {upgradeReveal && <div className="upgrade-overlay-pulse" />}
                             </div>
                         )}
                         {/* ログ: 画像の直下 */}
