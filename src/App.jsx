@@ -1360,8 +1360,8 @@ export default function App() {
                     <div style={{ color: '#fff', fontSize: FS }}>しらべる</div>
                     <button onClick={() => setSubMenu('forecast')} style={{ ...SI, color: '#00ffff' }}>けいじばんをみる（てんきよほう）</button>
                     <button onClick={() => {
-                        setSubMenu(null)
-                        setTimeout(() => { const r = doSearch(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state) }, 500)
+                        setIsProcessing(true)
+                        setTimeout(() => { const r = doSearch(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state); setIsProcessing(false) }, 500)
                     }} style={SI}>あたりをしらべる</button>
                     <button onClick={() => setSubMenu(null)} style={{ ...S, marginTop: 8 }}>もどる</button>
                 </div>
