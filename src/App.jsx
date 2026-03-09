@@ -1334,32 +1334,32 @@ export default function App() {
         }
         if (subMenu === 'storage') {
             const storage = gameState.clothingStorage || []
+            const equippedSlots = CLOTHING_SLOTS.filter(slot => gameState.clothing?.[slot])
             return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{ color: '#fff', fontSize: FS }}>アイテムボックス</div>
-                    <div style={{ color: '#aaa', fontSize: FS }}>{INDENT}── そうびをしまう ──</div>
-                    {CLOTHING_SLOTS.map(slot => {
-                        const itemId = gameState.clothing?.[slot]
-                        const item = itemId ? CLOTHING_ITEMS[itemId] : null
-                        if (!item) return null
-                        return (
-                            <button key={slot} onClick={() => handleStoreClothing(slot)} style={SI}>
-                                {item.name} をしまう
-                            </button>
-                        )
-                    })}
-                    {CLOTHING_SLOTS.every(slot => !gameState.clothing?.[slot]) && (
-                        <div style={{ color: '#aaa', fontSize: FS }}>{INDENT}そうびしているものが ない。</div>
-                    )}
-                    <div style={{ color: '#aaa', fontSize: FS, marginTop: 8 }}>{INDENT}── しまってあるもの ──</div>
                     {storage.length === 0 ? (
-                        <div style={{ color: '#aaa', fontSize: FS }}>{INDENT}なにも ない。</div>
+                        <div style={{ color: '#555', fontSize: FS }}>{INDENT}なにもない。</div>
                     ) : (
                         storage.map((itemId, i) => {
                             const item = CLOTHING_ITEMS[itemId]
                             return (
                                 <button key={i} onClick={() => handleRetrieveClothing(itemId)} style={SI}>
-                                    {item?.name || itemId} をとりだす
+                                    {INDENT}{item?.name || itemId}
+                                </button>
+                            )
+                        })
+                    )}
+                    <div style={{ color: '#fff', fontSize: FS, marginTop: 6 }}>そうびちゅう</div>
+                    {equippedSlots.length === 0 ? (
+                        <div style={{ color: '#555', fontSize: FS }}>{INDENT}なにもない。</div>
+                    ) : (
+                        equippedSlots.map(slot => {
+                            const itemId = gameState.clothing[slot]
+                            const item = CLOTHING_ITEMS[itemId]
+                            return (
+                                <button key={slot} onClick={() => handleStoreClothing(slot)} style={SI}>
+                                    {INDENT}{item?.name || itemId}
                                 </button>
                             )
                         })
