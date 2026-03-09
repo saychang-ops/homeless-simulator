@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>BGM プレビュー – 新宿の哀愁と喧騒</title>
+<style>
+  body { background: #0a0a0f; color: #c8c8d0; font-family: 'Courier New', monospace; padding: 24px; max-width: 700px; margin: 0 auto; }
+  h1 { color: #e8d080; font-size: 18px; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+  .shop { background: #12121a; border: 1px solid #2a2a3a; border-radius: 6px; margin: 12px 0; padding: 16px; }
+  .shop h2 { font-size: 14px; margin: 0 0 6px; }
+  .shop p  { font-size: 12px; color: #888; margin: 0 0 10px; line-height: 1.6; }
+  button { background: #1e1e30; border: 1px solid #444; color: #c8c8d0; padding: 6px 16px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 3px; margin-right: 6px; }
+  button:hover { background: #2a2a44; border-color: #888; }
+  button.active { background: #3a2a10; border-color: #e8d080; color: #e8d080; }
+  .stop-all { display: block; margin: 20px 0 0; background: #2a1010; border-color: #c04040; color: #f08080; padding: 8px 24px; }
+  .note { font-size: 11px; color: #666; margin-top: 16px; }
+  .sento h2  { color: #80c8e0; }
+  .bentoya h2{ color: #e0c060; }
+  .furugiya h2{ color: #c080e0; }
+  .recycle h2{ color: #a0c070; }
+  .fukubiki h2{ color: #e08060; }
+</style>
+</head>
+<body>
+
+<h1>🎵 BGM プレビュー「新宿の哀愁と喧騒」</h1>
+
+<div class="shop sento">
+  <h2>♨ せんとう</h2>
+  <p>三角波 / ゆったりヨナ抜き / エコー強め<br>
+     Melody: D4ペンタ、Bass: D2ロング、Delay: 480ms<br>
+     <em>疲れた体を温める、どこか寂しい湯気の音</em></p>
+  <button onclick="play('sento', this)">▶ 試聴</button>
+  <button onclick="stop('sento')">■ 停止</button>
+</div>
+
+<div class="shop bentoya">
+  <h2>🍱 べんとうや</h2>
+  <p>矩形波 / 高速アルペジオ / 絶え間ないベース<br>
+     Melody: C5速弾き、Bass: C3 8分、Noise: ハイハット感<br>
+     <em>昼どきの喧騒、蛍光灯と電子レンジの音</em></p>
+  <button onclick="play('bentoya', this)">▶ 試聴</button>
+  <button onclick="stop('bentoya')">■ 停止</button>
+</div>
+
+<div class="shop furugiya">
+  <h2>👗 ふるぎや</h2>
+  <p>三角波 + デチューン矩形波 / ジャジー / シティポップ残骸<br>
+     Melody: Am7コード感、Bass: ウォーキング、デチューン: ±5cent<br>
+     <em>80年代の残り香、埃っぽいレコードの針音</em></p>
+  <button onclick="play('furugiya', this)">▶ 試聴</button>
+  <button onclick="stop('furugiya')">■ 停止</button>
+</div>
+
+<div class="shop recycle">
+  <h2>♻ リサイクルショップ</h2>
+  <p>のこぎり波 + ホワイトノイズ / 不安定低音 / クロマティック<br>
+     Melody: 半音階、Bass: D2ドローン、Noise: 不規則バースト<br>
+     <em>吹き溜まり、錆びた金属と蛍光灯のちらつき</em></p>
+  <button onclick="play('recycle', this)">▶ 試聴</button>
+  <button onclick="stop('recycle')">■ 停止</button>
+</div>
+
+<div class="shop fukubiki">
+  <h2>🎰 ふくびきじょ</h2>
+  <p>矩形波 / 高速ペンタ / パーカッシブノイズ<br>
+     Melody: G5ペンタ速弾き、Bass: G3 4分、Noise: スネア感<br>
+     <em>空虚な祝祭、誰もいないゲーセンの奥</em></p>
+  <button onclick="play('fukubiki', this)">▶ 試聴</button>
+  <button onclick="stop('fukubiki')">■ 停止</button>
+</div>
+
+<button class="stop-all" onclick="stopAll()">⬛ すべて停止</button>
+
+<p class="note">※ ブラウザのタブを開いた状態でボタンをクリックしてください（Web Audio API の制限）</p>
+
+<script>
+const ctx = new (window.AudioContext || window.webkitAudioContext)()
+const players = {}
+
+// ─── 周波数テーブル ───
+const N = {
+  REST: 0,
+  C2:65.41, D2:73.42, E2:82.41, F2:87.31, G2:98.00, A2:110.00, Bb2:116.54, B2:123.47,
+  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, Bb3:233.08, B3:246.94,
+  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, Bb4:466.16, B4:493.88,
+  C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00, Bb5:932.33, B5:987.77,
+  C6:1046.50, D6:1174.66,
+}
+
+// ─── 楽曲データ ───
+const MELODIES = {
+
+  sento: {
+    bpm: 60,
+    channels: {
+      melody: {
+        wave: 'triangle', vol: 0.18, detune: 0,
+        notes: [
+          [N.D4,2],[N.E4,1],[N.G4,1],[N.A4,2],[N.REST,1],
+          [N.B4,1],[N.A4,1],[N.G4,1],[N.E4,2],[N.D4,1],
+          [N.REST,1],[N.G4,1],[N.A4,1],[N.B4,2],[N.A4,1],
+          [N.G4,2],[N.E4,1],[N.D4,3],[N.REST,2],
+          [N.A4,2],[N.G4,1],[N.E4,1],[N.D4,2],[N.REST,1],
+          [N.E4,1],[N.G4,1],[N.A4,1],[N.B4,2],[N.A4,1],
+          [N.G4,2],[N.E4,2],[N.D4,4],[N.REST,2],
+        ],
+      },
+      bass: {
+        wave: 'triangle', vol: 0.14, detune: 0,
+        notes: [
+          [N.D2,4],[N.A2,4],[N.G2,4],[N.D2,4],
+          [N.D2,4],[N.A2,4],[N.G2,4],[N.D2,4],
+        ],
+      },
+    },
+    delay: { time: 0.48, feedback: 0.35, wet: 0.4 },
+  },
+
+  bentoya: {
+    bpm: 168,
+    channels: {
+      melody: {
+        wave: 'square', vol: 0.10, detune: 0,
+        notes: [
+          [N.C5,0.5],[N.E5,0.5],[N.G5,0.5],[N.C6,0.5],[N.G5,0.5],[N.E5,0.5],[N.C5,0.5],[N.REST,0.5],
+          [N.D5,0.5],[N.F5,0.5],[N.A5,0.5],[N.D6,0.5],[N.A5,0.5],[N.F5,0.5],[N.D5,0.5],[N.REST,0.5],
+          [N.E5,0.5],[N.G5,0.5],[N.B5,0.5],[N.E5,0.5],[N.G5,0.5],[N.E5,0.5],[N.C5,0.5],[N.REST,0.5],
+          [N.G4,0.5],[N.C5,0.5],[N.E5,0.5],[N.G5,0.5],[N.E5,0.5],[N.C5,0.5],[N.G4,0.5],[N.REST,0.5],
+        ],
+      },
+      bass: {
+        wave: 'square', vol: 0.13, detune: 0,
+        notes: [
+          [N.C3,1],[N.C3,1],[N.D3,1],[N.D3,1],
+          [N.E3,1],[N.E3,1],[N.G3,1],[N.G3,1],
+        ],
+      },
+      noise: {
+        type: 'hihat', vol: 0.04,
+        pattern: [1,0,1,0,1,0,1,0],
+        stepLen: 0.5,
+      },
+    },
+  },
+
+  furugiya: {
+    bpm: 88,
+    channels: {
+      melody: {
+        wave: 'square', vol: 0.10, detune: 8,
+        notes: [
+          [N.A4,1.5],[N.REST,0.5],[N.C5,1],[N.E5,1],[N.D5,1.5],[N.C5,0.5],[N.A4,2],[N.REST,1],
+          [N.G4,1.5],[N.REST,0.5],[N.Bb4,1],[N.D5,1],[N.C5,1.5],[N.A4,0.5],[N.G4,2],[N.REST,1],
+          [N.A4,1],[N.C5,1],[N.D5,1],[N.E5,1.5],[N.D5,0.5],[N.C5,1],[N.A4,3],[N.REST,1],
+          [N.E4,0.5],[N.G4,0.5],[N.A4,1],[N.Bb4,1],[N.A4,1],[N.G4,1],[N.A4,4],
+        ],
+      },
+      bass: {
+        wave: 'triangle', vol: 0.16, detune: 0,
+        notes: [
+          [N.A2,2],[N.G2,2],[N.F2,2],[N.E2,2],
+          [N.A2,2],[N.G2,2],[N.E2,2],[N.A2,2],
+        ],
+      },
+    },
+  },
+
+  recycle: {
+    bpm: 76,
+    channels: {
+      melody: {
+        wave: 'sawtooth', vol: 0.08, detune: 0,
+        notes: [
+          [N.A4,0.5],[N.Bb4,0.5],[N.A4,0.5],[N.REST,0.5],[N.G4,1],[N.F4,0.5],[N.E4,1],[N.REST,0.5],
+          [N.A3,0.5],[N.C4,0.5],[N.E4,0.5],[N.G4,0.5],[N.Bb4,1],[N.A4,0.5],[N.REST,1],
+          [N.E4,0.5],[N.F4,0.5],[N.G4,0.5],[N.F4,0.5],[N.E4,1],[N.D4,0.5],[N.C4,1],[N.REST,0.5],
+          [N.Bb3,0.5],[N.C4,0.5],[N.D4,0.5],[N.E4,0.5],[N.G4,0.5],[N.Bb4,0.5],[N.A4,2],[N.REST,1],
+        ],
+      },
+      bass: {
+        wave: 'sawtooth', vol: 0.15, detune: 0,
+        notes: [
+          [N.D2,4],[N.D2,2],[N.E2,2],
+          [N.F2,4],[N.E2,2],[N.D2,2],
+        ],
+      },
+      noise: {
+        type: 'burst', vol: 0.06,
+        pattern: [0,0,0,1,0,0,1,0],
+        stepLen: 1,
+      },
+    },
+  },
+
+  fukubiki: {
+    bpm: 180,
+    channels: {
+      melody: {
+        wave: 'square', vol: 0.10, detune: 0,
+        notes: [
+          [N.G4,0.25],[N.A4,0.25],[N.C5,0.5],[N.D5,0.25],[N.E5,0.25],
+          [N.D5,0.5],[N.C5,0.25],[N.A4,0.25],[N.G4,0.5],[N.REST,0.25],
+          [N.C5,0.25],[N.D5,0.25],[N.E5,0.25],[N.G5,0.5],[N.E5,0.25],
+          [N.D5,0.25],[N.C5,0.5],[N.REST,0.25],
+          [N.A4,0.25],[N.C5,0.25],[N.D5,0.25],[N.E5,0.25],
+          [N.G5,0.25],[N.E5,0.25],[N.D5,0.25],[N.C5,0.25],
+          [N.A4,0.75],[N.REST,0.25],
+          [N.G4,0.25],[N.A4,0.25],[N.C5,0.25],[N.A4,0.25],
+          [N.G4,0.25],[N.E4,0.25],[N.G4,0.75],[N.REST,0.5],
+        ],
+      },
+      bass: {
+        wave: 'square', vol: 0.13, detune: 0,
+        notes: [
+          [N.G3,1],[N.G3,1],[N.C4,1],[N.D4,1],
+          [N.E4,1],[N.C4,1],[N.G3,2],
+        ],
+      },
+      noise: {
+        type: 'snare', vol: 0.05,
+        pattern: [0,0,1,0,0,0,1,0],
+        stepLen: 0.25,
+      },
+    },
+  },
+}
+
+// ─── プレイヤーエンジン ───
+function createDelayFx(spec) {
+  const delay    = ctx.createDelay(2.0)
+  const feedback = ctx.createGain()
+  const wet      = ctx.createGain()
+  const dry      = ctx.createGain()
+  delay.delayTime.value  = spec.time
+  feedback.gain.value    = spec.feedback
+  wet.gain.value         = spec.wet
+  dry.gain.value         = 1 - spec.wet * 0.5
+  delay.connect(feedback)
+  feedback.connect(delay)
+  delay.connect(wet)
+  wet.connect(ctx.destination)
+  dry.connect(ctx.destination)
+  // input: dry.connect へ繋ぐ→ delay.connect でエフェクト
+  return { input: dry, delayInput: delay, nodes: [delay, feedback, wet, dry] }
+}
+
+function playNote(freq, duration, wave, vol, detune, output) {
+  if (freq === 0) return
+  const now = ctx.currentTime
+  const osc  = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = wave
+  osc.frequency.setValueAtTime(freq, now)
+  if (detune) osc.detune.setValueAtTime(detune, now)
+  gain.gain.setValueAtTime(0, now)
+  gain.gain.linearRampToValueAtTime(vol, now + 0.008)
+  gain.gain.setValueAtTime(vol, now + duration * 0.75)
+  gain.gain.linearRampToValueAtTime(0, now + duration * 0.95)
+  osc.connect(gain)
+  gain.connect(output)
+  osc.start(now)
+  osc.stop(now + duration)
+  osc.onended = () => { try { osc.disconnect(); gain.disconnect() } catch{} }
+}
+
+function playNoiseHit(type, vol, duration, output) {
+  const bufSize = ctx.sampleRate * 0.1
+  const buf  = ctx.createBuffer(1, bufSize, ctx.sampleRate)
+  const data = buf.getChannelData(0)
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1
+
+  const source = ctx.createBufferSource()
+  source.buffer = buf
+
+  const filter = ctx.createBiquadFilter()
+  if (type === 'hihat') { filter.type = 'highpass'; filter.frequency.value = 8000 }
+  else if (type === 'snare') { filter.type = 'bandpass'; filter.frequency.value = 1800; filter.Q.value = 0.8 }
+  else { filter.type = 'lowpass'; filter.frequency.value = 2000 }
+
+  const gain = ctx.createGain()
+  const now = ctx.currentTime
+  gain.gain.setValueAtTime(vol, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration)
+
+  source.connect(filter)
+  filter.connect(gain)
+  gain.connect(output)
+  source.start(now)
+  source.onended = () => { try { source.disconnect(); filter.disconnect(); gain.disconnect() } catch{} }
+}
+
+function play(shopId, btn) {
+  if (ctx.state === 'suspended') ctx.resume()
+  stop(shopId)
+
+  const spec = MELODIES[shopId]
+  const secPerBeat = 60 / spec.bpm
+
+  // マスターゲイン
+  const master = ctx.createGain()
+  master.gain.value = 0.7
+  master.connect(ctx.destination)
+
+  // エフェクト
+  let fxOut = master
+  let fxNodes = []
+  if (spec.delay) {
+    const fx = createDelayFx(spec.delay)
+    fx.input.connect(ctx.destination)
+    fx.delayInput.connect(ctx.destination) // 既に内部で接続済
+    fxOut = fx.input
+    fxNodes = fx.nodes
+  }
+
+  const timers = []
+  const ch = spec.channels
+
+  // ── melody チャンネル ──
+  if (ch.melody) {
+    const m = ch.melody
+    const totalBeats = m.notes.reduce((s, [,d]) => s + d, 0)
+    const loopAndPlay = () => {
+      let offset = 0
+      m.notes.forEach(([freq, beats]) => {
+        const dur = beats * secPerBeat
+        const t = setTimeout(() => {
+          playNote(freq, dur * 0.92, m.wave, m.vol, m.detune || 0, fxOut)
+        }, offset * 1000)
+        timers.push(t)
+        offset += dur
+      })
+      const loop = setTimeout(loopAndPlay, totalBeats * secPerBeat * 1000)
+      timers.push(loop)
+    }
+    loopAndPlay()
+  }
+
+  // ── bass チャンネル ──
+  if (ch.bass) {
+    const b = ch.bass
+    const totalBeats = b.notes.reduce((s, [,d]) => s + d, 0)
+    const loopAndPlay = () => {
+      let offset = 0
+      b.notes.forEach(([freq, beats]) => {
+        const dur = beats * secPerBeat
+        const t = setTimeout(() => {
+          playNote(freq, dur * 0.85, b.wave, b.vol, b.detune || 0, master)
+        }, offset * 1000)
+        timers.push(t)
+        offset += dur
+      })
+      const loop = setTimeout(loopAndPlay, totalBeats * secPerBeat * 1000)
+      timers.push(loop)
+    }
+    loopAndPlay()
+  }
+
+  // ── noise チャンネル ──
+  if (ch.noise) {
+    const n = ch.noise
+    const stepSec = n.stepLen * secPerBeat
+    const totalSteps = n.pattern.length
+    const loopAndPlay = (step = 0) => {
+      if (n.pattern[step]) {
+        playNoiseHit(n.type, n.vol, stepSec * 0.7, master)
+      }
+      const next = (step + 1) % totalSteps
+      const t = setTimeout(() => loopAndPlay(next), stepSec * 1000)
+      timers.push(t)
+    }
+    loopAndPlay()
+  }
+
+  players[shopId] = { timers, master, fxNodes }
+
+  // ボタン状態
+  document.querySelectorAll('button.active').forEach(b => b.classList.remove('active'))
+  if (btn) btn.classList.add('active')
+}
+
+function stop(shopId) {
+  const p = players[shopId]
+  if (!p) return
+  p.timers.forEach(t => clearTimeout(t))
+  try { p.master.gain.setValueAtTime(0, ctx.currentTime); p.master.disconnect() } catch {}
+  p.fxNodes?.forEach(n => { try { n.disconnect() } catch {} })
+  delete players[shopId]
+}
+
+function stopAll() {
+  Object.keys(players).forEach(stop)
+  document.querySelectorAll('button.active').forEach(b => b.classList.remove('active'))
+}
+</script>
+</body>
+</html>

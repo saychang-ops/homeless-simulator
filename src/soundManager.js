@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════
  *  Homeless Simulator – サウンドマネージャー
  *  エリア × 時間帯 × 天候 で環境音をループ切替
- *  店舗サブエリアは Web Audio API 8bit シンセで演奏
+ *  店舗サブエリアは Web Audio API アンサンブルシンセで演奏
+ *  テーマ：「新宿の哀愁と喧騒」
  * ═══════════════════════════════════════════════════ */
 
 const FADE_MS = 1500  // フェード時間
@@ -37,79 +38,182 @@ const SOUND_MAP = {
 /* ── 店舗エリアセット ── */
 const SHOP_AREAS = new Set(['sento', 'bentoya', 'furugiya', 'recycle', 'fukubiki'])
 
-/* ── 8bit シンセ用周波数テーブル ── */
+/* ── 周波数テーブル ── */
 const N = {
     REST: 0,
-    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, Bb3: 233.08, B3: 246.94,
-    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, Bb4: 466.16, B4: 493.88,
-    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, Bb5: 932.33,
-    C6: 1046.50,
+    C2:65.41, D2:73.42, E2:82.41, F2:87.31, G2:98.00, A2:110.00, Bb2:116.54, B2:123.47,
+    C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, Bb3:233.08, B3:246.94,
+    C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, Bb4:466.16, B4:493.88,
+    C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00, Bb5:932.33, B5:987.77,
+    C6:1046.50, D6:1174.66,
 }
 
-/* ── 店舗別メロディデータ [周波数Hz, 秒数] ──
- *   REST(0) は無音ポーズ
- * ───────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════
+ *  店舗別アンサンブルデータ
+ *  各店舗は { bpm, channels, delay? } の形式
+ *  channels: { melody, bass, noise }
+ *    melody/bass: { wave, vol, detune, notes: [[Hz, beats], ...] }
+ *    noise:       { type('hihat'|'snare'|'burst'), vol, pattern, stepLen }
+ *  delay: { time, feedback, wet }  ← DelayNode エフェクト（任意）
+ * ══════════════════════════════════════════════════════ */
 const SHOP_MELODIES = {
 
-    // 銭湯: ゆったり和風（ヨナ抜き音階 C D E G A）
-    sento: [
-        [N.C4, 0.6], [N.D4, 0.3], [N.E4, 0.6], [N.G4, 0.6],
-        [N.A4, 0.9], [N.REST, 0.3], [N.G4, 0.6], [N.E4, 0.6],
-        [N.D4, 0.4], [N.C4, 0.3], [N.D4, 0.3], [N.E4, 0.9],
-        [N.REST, 0.3], [N.G4, 0.6], [N.E4, 0.4], [N.D4, 0.2],
-        [N.C4, 0.6], [N.A3, 0.6], [N.C4, 1.2], [N.REST, 0.6],
-        [N.E4, 0.6], [N.G4, 0.6], [N.A4, 0.6], [N.G4, 0.4],
-        [N.E4, 0.3], [N.D4, 0.3], [N.C4, 1.5], [N.REST, 0.6],
-    ],
+    // ─────────────────────────────────────────────────
+    // 銭湯: 三角波ヨナ抜き（D E G A B）＋ エコー
+    //   疲れた体を温める、どこか寂しい湯気の音
+    // ─────────────────────────────────────────────────
+    sento: {
+        bpm: 60,
+        channels: {
+            melody: {
+                wave: 'triangle', vol: 0.18, detune: 0,
+                notes: [
+                    [N.D4,2],[N.E4,1],[N.G4,1],[N.A4,2],[N.REST,1],
+                    [N.B4,1],[N.A4,1],[N.G4,1],[N.E4,2],[N.D4,1],
+                    [N.REST,1],[N.G4,1],[N.A4,1],[N.B4,2],[N.A4,1],
+                    [N.G4,2],[N.E4,1],[N.D4,3],[N.REST,2],
+                    [N.A4,2],[N.G4,1],[N.E4,1],[N.D4,2],[N.REST,1],
+                    [N.E4,1],[N.G4,1],[N.A4,1],[N.B4,2],[N.A4,1],
+                    [N.G4,2],[N.E4,2],[N.D4,4],[N.REST,2],
+                ],
+            },
+            bass: {
+                wave: 'triangle', vol: 0.14, detune: 0,
+                notes: [
+                    [N.D2,4],[N.A2,4],[N.G2,4],[N.D2,4],
+                    [N.D2,4],[N.A2,4],[N.G2,4],[N.D2,4],
+                ],
+            },
+        },
+        delay: { time: 0.48, feedback: 0.35, wet: 0.4 },
+    },
 
-    // 弁当屋: 明るく元気（ハ長調・アイテム屋風）
-    bentoya: [
-        [N.C5, 0.15], [N.E5, 0.15], [N.G5, 0.15], [N.E5, 0.15],
-        [N.C5, 0.15], [N.D5, 0.15], [N.E5, 0.30], [N.REST, 0.15],
-        [N.G4, 0.15], [N.A4, 0.15], [N.C5, 0.15], [N.A4, 0.15],
-        [N.G4, 0.15], [N.E4, 0.30], [N.REST, 0.15],
-        [N.C5, 0.15], [N.B4, 0.15], [N.A4, 0.15], [N.G4, 0.15],
-        [N.E4, 0.15], [N.G4, 0.15], [N.C5, 0.45], [N.REST, 0.15],
-        [N.E5, 0.15], [N.D5, 0.15], [N.C5, 0.15], [N.B4, 0.15],
-        [N.C5, 0.15], [N.E5, 0.15], [N.G5, 0.30], [N.REST, 0.30],
-    ],
+    // ─────────────────────────────────────────────────
+    // 弁当屋: 矩形波高速アルペジオ ＋ ハイハット
+    //   昼どきの喧騒、蛍光灯と電子レンジの音
+    // ─────────────────────────────────────────────────
+    bentoya: {
+        bpm: 168,
+        channels: {
+            melody: {
+                wave: 'square', vol: 0.10, detune: 0,
+                notes: [
+                    [N.C5,0.5],[N.E5,0.5],[N.G5,0.5],[N.C6,0.5],[N.G5,0.5],[N.E5,0.5],[N.C5,0.5],[N.REST,0.5],
+                    [N.D5,0.5],[N.F5,0.5],[N.A5,0.5],[N.D6,0.5],[N.A5,0.5],[N.F5,0.5],[N.D5,0.5],[N.REST,0.5],
+                    [N.E5,0.5],[N.G5,0.5],[N.B5,0.5],[N.E5,0.5],[N.G5,0.5],[N.E5,0.5],[N.C5,0.5],[N.REST,0.5],
+                    [N.G4,0.5],[N.C5,0.5],[N.E5,0.5],[N.G5,0.5],[N.E5,0.5],[N.C5,0.5],[N.G4,0.5],[N.REST,0.5],
+                ],
+            },
+            bass: {
+                wave: 'square', vol: 0.13, detune: 0,
+                notes: [
+                    [N.C3,1],[N.C3,1],[N.D3,1],[N.D3,1],
+                    [N.E3,1],[N.E3,1],[N.G3,1],[N.G3,1],
+                ],
+            },
+            noise: {
+                type: 'hihat', vol: 0.04,
+                pattern: [1,0,1,0,1,0,1,0],
+                stepLen: 0.5,
+            },
+        },
+    },
 
-    // 古着屋: 都会的・落ち着き（イ短調・ジャジーな間）
-    furugiya: [
-        [N.A4, 0.30], [N.REST, 0.15], [N.C5, 0.30], [N.E5, 0.30],
-        [N.D5, 0.45], [N.C5, 0.15], [N.A4, 0.60], [N.REST, 0.30],
-        [N.G4, 0.30], [N.REST, 0.15], [N.Bb4, 0.30], [N.D5, 0.30],
-        [N.C5, 0.45], [N.A4, 0.15], [N.G4, 0.60], [N.REST, 0.45],
-        [N.A4, 0.30], [N.C5, 0.30], [N.D5, 0.30], [N.E5, 0.45],
-        [N.D5, 0.15], [N.C5, 0.30], [N.A4, 0.90], [N.REST, 0.30],
-        [N.G4, 0.15], [N.A4, 0.15], [N.C5, 0.30], [N.Bb4, 0.30],
-        [N.A4, 0.30], [N.G4, 0.30], [N.A4, 1.20], [N.REST, 0.60],
-    ],
+    // ─────────────────────────────────────────────────
+    // 古着屋: 80年代シティポップの残骸
+    //   三角波ウォーキングベース ＋ デチューン矩形波メロディ
+    //   埃っぽいレコードの針音
+    // ─────────────────────────────────────────────────
+    furugiya: {
+        bpm: 88,
+        channels: {
+            melody: {
+                wave: 'square', vol: 0.10, detune: 8,
+                notes: [
+                    [N.A4,1.5],[N.REST,0.5],[N.C5,1],[N.E5,1],[N.D5,1.5],[N.C5,0.5],[N.A4,2],[N.REST,1],
+                    [N.G4,1.5],[N.REST,0.5],[N.Bb4,1],[N.D5,1],[N.C5,1.5],[N.A4,0.5],[N.G4,2],[N.REST,1],
+                    [N.A4,1],[N.C5,1],[N.D5,1],[N.E5,1.5],[N.D5,0.5],[N.C5,1],[N.A4,3],[N.REST,1],
+                    [N.E4,0.5],[N.G4,0.5],[N.A4,1],[N.Bb4,1],[N.A4,1],[N.G4,1],[N.A4,4],
+                ],
+            },
+            bass: {
+                wave: 'triangle', vol: 0.16, detune: 0,
+                notes: [
+                    [N.A2,2],[N.G2,2],[N.F2,2],[N.E2,2],
+                    [N.A2,2],[N.G2,2],[N.E2,2],[N.A2,2],
+                ],
+            },
+        },
+    },
 
-    // リサイクルショップ: 怪しげ（半音・マイナースケール）
-    recycle: [
-        [N.A4, 0.20], [N.Bb4, 0.20], [N.A4, 0.20], [N.REST, 0.20],
-        [N.G4, 0.40], [N.F4, 0.20], [N.E4, 0.40], [N.REST, 0.20],
-        [N.A3, 0.20], [N.C4, 0.20], [N.E4, 0.20], [N.G4, 0.20],
-        [N.Bb4, 0.40], [N.A4, 0.20], [N.REST, 0.40],
-        [N.E4, 0.20], [N.F4, 0.20], [N.G4, 0.20], [N.F4, 0.20],
-        [N.E4, 0.40], [N.D4, 0.20], [N.C4, 0.40], [N.REST, 0.20],
-        [N.Bb3, 0.20], [N.C4, 0.20], [N.D4, 0.20], [N.E4, 0.20],
-        [N.G4, 0.20], [N.Bb4, 0.20], [N.A4, 0.60], [N.REST, 0.40],
-    ],
+    // ─────────────────────────────────────────────────
+    // リサイクルショップ: 吹き溜まりの不気味さ
+    //   のこぎり波クロマティック ＋ 不規則ノイズバースト
+    //   錆びた金属と蛍光灯のちらつき
+    // ─────────────────────────────────────────────────
+    recycle: {
+        bpm: 76,
+        channels: {
+            melody: {
+                wave: 'sawtooth', vol: 0.08, detune: 0,
+                notes: [
+                    [N.A4,0.5],[N.Bb4,0.5],[N.A4,0.5],[N.REST,0.5],[N.G4,1],[N.F4,0.5],[N.E4,1],[N.REST,0.5],
+                    [N.A3,0.5],[N.C4,0.5],[N.E4,0.5],[N.G4,0.5],[N.Bb4,1],[N.A4,0.5],[N.REST,1],
+                    [N.E4,0.5],[N.F4,0.5],[N.G4,0.5],[N.F4,0.5],[N.E4,1],[N.D4,0.5],[N.C4,1],[N.REST,0.5],
+                    [N.Bb3,0.5],[N.C4,0.5],[N.D4,0.5],[N.E4,0.5],[N.G4,0.5],[N.Bb4,0.5],[N.A4,2],[N.REST,1],
+                ],
+            },
+            bass: {
+                wave: 'sawtooth', vol: 0.15, detune: 0,
+                notes: [
+                    [N.D2,4],[N.D2,2],[N.E2,2],
+                    [N.F2,4],[N.E2,2],[N.D2,2],
+                ],
+            },
+            noise: {
+                type: 'burst', vol: 0.06,
+                pattern: [0,0,0,1,0,0,1,0],
+                stepLen: 1,
+            },
+        },
+    },
 
-    // 福引き: アップテンポ・お祭り（ペンタトニック）
-    fukubiki: [
-        [N.G4, 0.10], [N.A4, 0.10], [N.C5, 0.20], [N.D5, 0.10], [N.E5, 0.10],
-        [N.D5, 0.20], [N.C5, 0.10], [N.A4, 0.10], [N.G4, 0.20], [N.REST, 0.10],
-        [N.C5, 0.10], [N.D5, 0.10], [N.E5, 0.10], [N.G5, 0.20], [N.E5, 0.10],
-        [N.D5, 0.10], [N.C5, 0.20], [N.REST, 0.10],
-        [N.A4, 0.10], [N.C5, 0.10], [N.D5, 0.10], [N.E5, 0.10],
-        [N.G5, 0.10], [N.E5, 0.10], [N.D5, 0.10], [N.C5, 0.10],
-        [N.A4, 0.30], [N.REST, 0.10],
-        [N.G4, 0.10], [N.A4, 0.10], [N.C5, 0.10], [N.A4, 0.10],
-        [N.G4, 0.10], [N.E4, 0.10], [N.G4, 0.30], [N.REST, 0.20],
-    ],
+    // ─────────────────────────────────────────────────
+    // 福引き: 空虚な祝祭感
+    //   明るすぎる高速ペンタ ＋ パーカッシブノイズ
+    //   誰もいないゲーセンの奥
+    // ─────────────────────────────────────────────────
+    fukubiki: {
+        bpm: 180,
+        channels: {
+            melody: {
+                wave: 'square', vol: 0.10, detune: 0,
+                notes: [
+                    [N.G4,0.25],[N.A4,0.25],[N.C5,0.5],[N.D5,0.25],[N.E5,0.25],
+                    [N.D5,0.5],[N.C5,0.25],[N.A4,0.25],[N.G4,0.5],[N.REST,0.25],
+                    [N.C5,0.25],[N.D5,0.25],[N.E5,0.25],[N.G5,0.5],[N.E5,0.25],
+                    [N.D5,0.25],[N.C5,0.5],[N.REST,0.25],
+                    [N.A4,0.25],[N.C5,0.25],[N.D5,0.25],[N.E5,0.25],
+                    [N.G5,0.25],[N.E5,0.25],[N.D5,0.25],[N.C5,0.25],
+                    [N.A4,0.75],[N.REST,0.25],
+                    [N.G4,0.25],[N.A4,0.25],[N.C5,0.25],[N.A4,0.25],
+                    [N.G4,0.25],[N.E4,0.25],[N.G4,0.75],[N.REST,0.5],
+                ],
+            },
+            bass: {
+                wave: 'square', vol: 0.13, detune: 0,
+                notes: [
+                    [N.G3,1],[N.G3,1],[N.C4,1],[N.D4,1],
+                    [N.E4,1],[N.C4,1],[N.G3,2],
+                ],
+            },
+            noise: {
+                type: 'snare', vol: 0.05,
+                pattern: [0,0,1,0,0,0,1,0],
+                stepLen: 0.25,
+            },
+        },
+    },
 }
 
 /* ── マネージャー本体 ── */
@@ -123,11 +227,12 @@ class SoundManager {
         this.audioCtx    = null   // Web Audio API コンテキスト
         this.bgmOverride = false  // ちんちろりんBGM中は環境音を更新しない
 
-        // シンセ関連
-        this._synthActive = false
-        this._synthTimer  = null
-        this._synthGain   = null
-        this._synthAreaId = null
+        // アンサンブルシンセ関連
+        this._synthActive  = false
+        this._synthTimers  = []    // 全チャネルのタイマーIDを管理
+        this._synthMaster  = null  // マスターゲインノード
+        this._synthFxNodes = []    // DelayFX等のノード群
+        this._synthAreaId  = null
 
         // オープニングBGM
         this._openingAudio = null
@@ -189,78 +294,201 @@ class SoundManager {
         this.crossfadeTo(src, key)
     }
 
-    /* ─────────────────────────────────────────
-     *  8bit シンセ BGM
-     * ───────────────────────────────────────── */
+    /* ═════════════════════════════════════════════════
+     *  アンサンブルシンセ BGM
+     *  Melody / Bass / Noise を並行ループ再生
+     * ═════════════════════════════════════════════════ */
 
-    /** 店舗専用 8bit シンセ BGM を開始 */
+    /** 単音を鳴らす（ADSRエンベロープ付き） */
+    _playNote(freq, duration, wave, vol, detune, output) {
+        if (freq === 0 || !this.audioCtx) return
+        const ctx = this.audioCtx
+        const now = ctx.currentTime
+        const osc  = ctx.createOscillator()
+        const gain = ctx.createGain()
+
+        osc.type = wave
+        osc.frequency.setValueAtTime(freq, now)
+        if (detune) osc.detune.setValueAtTime(detune, now)
+
+        // ADSR: アタック → サステイン → リリース
+        gain.gain.setValueAtTime(0, now)
+        gain.gain.linearRampToValueAtTime(vol, now + 0.008)           // Attack
+        gain.gain.setValueAtTime(vol, now + duration * 0.75)          // Sustain
+        gain.gain.linearRampToValueAtTime(0, now + duration * 0.95)   // Release
+
+        osc.connect(gain)
+        gain.connect(output)
+        osc.start(now)
+        osc.stop(now + duration)
+        osc.onended = () => { try { osc.disconnect(); gain.disconnect() } catch { /* ignore */ } }
+    }
+
+    /** ノイズヒットを鳴らす（ハイハット / スネア / バースト） */
+    _playNoise(type, vol, duration, output) {
+        if (!this.audioCtx) return
+        const ctx = this.audioCtx
+        const bufSize = Math.ceil(ctx.sampleRate * Math.min(duration, 0.15))
+        const buf  = ctx.createBuffer(1, bufSize, ctx.sampleRate)
+        const data = buf.getChannelData(0)
+        for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1
+
+        const source = ctx.createBufferSource()
+        source.buffer = buf
+
+        const filter = ctx.createBiquadFilter()
+        if (type === 'hihat') {
+            filter.type = 'highpass'; filter.frequency.value = 8000
+        } else if (type === 'snare') {
+            filter.type = 'bandpass'; filter.frequency.value = 1800; filter.Q.value = 0.8
+        } else {
+            filter.type = 'lowpass'; filter.frequency.value = 2000
+        }
+
+        const gain = ctx.createGain()
+        const now  = ctx.currentTime
+        gain.gain.setValueAtTime(vol, now)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.9)
+
+        source.connect(filter)
+        filter.connect(gain)
+        gain.connect(output)
+        source.start(now)
+        source.onended = () => { try { source.disconnect(); filter.disconnect(); gain.disconnect() } catch { /* ignore */ } }
+    }
+
+    /** DelayFXノードを生成してマスターへ接続 */
+    _buildDelayFx(spec) {
+        const ctx      = this.audioCtx
+        const delay    = ctx.createDelay(2.0)
+        const feedback = ctx.createGain()
+        const wetGain  = ctx.createGain()
+        const dryGain  = ctx.createGain()
+
+        delay.delayTime.value = spec.time
+        feedback.gain.value   = spec.feedback
+        wetGain.gain.value    = spec.wet
+        dryGain.gain.value    = 1.0
+
+        // dry: input → dryGain → destination
+        // wet: input → delay → wetGain → destination
+        //            ↑feedback↙
+        delay.connect(feedback)
+        feedback.connect(delay)
+        delay.connect(wetGain)
+        wetGain.connect(ctx.destination)
+        dryGain.connect(ctx.destination)
+
+        this._synthFxNodes.push(delay, feedback, wetGain, dryGain)
+        return dryGain  // メロディはここへ接続（dryはそのままdestへ、delayにもルーティング）
+    }
+
+    /** チャネルループを開始し、タイマーIDを _synthTimers に登録 */
+    _startMelodyLoop(ch, secPerBeat, output) {
+        const totalSec = ch.notes.reduce((s, [, b]) => s + b * secPerBeat, 0)
+        const loop = (noteIdx) => {
+            if (!this._synthActive) return
+            const [freq, beats] = ch.notes[noteIdx]
+            const dur = beats * secPerBeat
+            this._playNote(freq, dur * 0.92, ch.wave, ch.vol, ch.detune || 0, output)
+            const next = (noteIdx + 1) % ch.notes.length
+            const t = setTimeout(() => loop(next), dur * 1000)
+            this._synthTimers.push(t)
+        }
+        loop(0)
+    }
+
+    _startBassLoop(ch, secPerBeat, output) {
+        const loop = (noteIdx) => {
+            if (!this._synthActive) return
+            const [freq, beats] = ch.notes[noteIdx]
+            const dur = beats * secPerBeat
+            this._playNote(freq, dur * 0.85, ch.wave, ch.vol, ch.detune || 0, output)
+            const next = (noteIdx + 1) % ch.notes.length
+            const t = setTimeout(() => loop(next), dur * 1000)
+            this._synthTimers.push(t)
+        }
+        loop(0)
+    }
+
+    _startNoiseLoop(n, secPerBeat, output) {
+        const stepSec = n.stepLen * secPerBeat
+        const loop = (step) => {
+            if (!this._synthActive) return
+            if (n.pattern[step]) {
+                this._playNoise(n.type, n.vol, stepSec * 0.7, output)
+            }
+            const next = (step + 1) % n.pattern.length
+            const t = setTimeout(() => loop(next), stepSec * 1000)
+            this._synthTimers.push(t)
+        }
+        loop(0)
+    }
+
+    /** 店舗専用アンサンブルシンセ BGM を開始 */
     playSynthBGM(areaId) {
         if (!this.audioCtx || !SHOP_MELODIES[areaId]) return
 
-        // 既存シンセを停止してから開始
         this.stopSynthBGM()
 
         if (this.audioCtx.state === 'suspended') {
             this.audioCtx.resume()
         }
 
+        const spec       = SHOP_MELODIES[areaId]
+        const secPerBeat = 60 / spec.bpm
+
         // マスターゲイン（タイピング音の邪魔にならないよう小さめ）
-        const masterGain = this.audioCtx.createGain()
-        masterGain.gain.setValueAtTime(0.05, this.audioCtx.currentTime)
-        masterGain.connect(this.audioCtx.destination)
-        this._synthGain   = masterGain
+        const master = this.audioCtx.createGain()
+        master.gain.setValueAtTime(0.55, this.audioCtx.currentTime)
+        master.connect(this.audioCtx.destination)
+        this._synthMaster = master
         this._synthActive = true
         this._synthAreaId = areaId
+        this._synthFxNodes = []
+        this._synthTimers  = []
 
-        const melody = SHOP_MELODIES[areaId]
-        let noteIndex = 0
+        const ch = spec.channels
 
-        const tick = () => {
-            if (!this._synthActive) return
-
-            const [freq, duration] = melody[noteIndex]
-            noteIndex = (noteIndex + 1) % melody.length
-
-            if (freq > 0) {
-                const osc     = this.audioCtx.createOscillator()
-                const envGain = this.audioCtx.createGain()
-                const now     = this.audioCtx.currentTime
-
-                // 波形: sento=triangle(柔らかい), recycle=sawtooth(怪しい), others=square(ゲーム感)
-                const waveTypes = { sento: 'triangle', recycle: 'sawtooth', furugiya: 'triangle' }
-                osc.type = waveTypes[areaId] || 'square'
-                osc.frequency.setValueAtTime(freq, now)
-
-                // エンベロープ: アタック → 音の末尾でカット
-                envGain.gain.setValueAtTime(0, now)
-                envGain.gain.linearRampToValueAtTime(1, now + 0.005)          // 素早いアタック
-                envGain.gain.setValueAtTime(1, now + duration * 0.80)         // サステイン
-                envGain.gain.linearRampToValueAtTime(0, now + duration * 0.95) // リリース
-
-                osc.connect(envGain)
-                envGain.connect(masterGain)
-
-                osc.start(now)
-                osc.stop(now + duration)
+        // ── Melody チャンネル（DelayFX 経由の場合あり） ──
+        if (ch.melody) {
+            let melodyOut = master
+            if (spec.delay) {
+                const dryIn = this._buildDelayFx(spec.delay)
+                // delay にも入力させる（wet 用）
+                const splitter = this.audioCtx.createGain()
+                splitter.gain.value = 1
+                splitter.connect(dryIn)
+                const delayNode = this._synthFxNodes[0]  // 最初に追加された delay
+                splitter.connect(delayNode)
+                this._synthFxNodes.push(splitter)
+                melodyOut = splitter
             }
-
-            this._synthTimer = setTimeout(tick, duration * 1000)
+            this._startMelodyLoop(ch.melody, secPerBeat, melodyOut)
         }
 
-        tick()
+        // ── Bass チャンネル ──
+        if (ch.bass) {
+            this._startBassLoop(ch.bass, secPerBeat, master)
+        }
+
+        // ── Noise チャンネル ──
+        if (ch.noise) {
+            this._startNoiseLoop(ch.noise, secPerBeat, master)
+        }
     }
 
-    /** 8bit シンセ BGM を停止 */
+    /** アンサンブルシンセ BGM を停止 */
     stopSynthBGM() {
         this._synthActive = false
         this._synthAreaId = null
-        if (this._synthTimer) {
-            clearTimeout(this._synthTimer)
-            this._synthTimer = null
-        }
-        if (this._synthGain) {
-            try { this._synthGain.disconnect() } catch { /* ignore */ }
-            this._synthGain = null
+        this._synthTimers.forEach(t => clearTimeout(t))
+        this._synthTimers = []
+        this._synthFxNodes.forEach(n => { try { n.disconnect() } catch { /* ignore */ } })
+        this._synthFxNodes = []
+        if (this._synthMaster) {
+            try { this._synthMaster.disconnect() } catch { /* ignore */ }
+            this._synthMaster = null
         }
     }
 
