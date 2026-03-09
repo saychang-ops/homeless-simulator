@@ -531,7 +531,7 @@ export default function App() {
         switch (commandId) {
             case 'shiraberu':
                 if (gameState.area === 'tocho') { setSubMenu('tocho_shiraberu'); setIsProcessing(false) }
-                else setTimeout(() => { const r = doSearch(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state); setIsProcessing(false) }, 500)
+                else setTimeout(() => { const r = handleSearch(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state); setIsProcessing(false) }, 500)
                 break
             case 'basho': setSubMenu('move'); setIsProcessing(false); break
             case 'hanasu': {
@@ -653,6 +653,20 @@ export default function App() {
     }
 
     const handleApplyJob = () => { const r = applyForJob(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state); if (r.accepted) setSubMenu(null); else setSubMenu(null) }
+    const handleSearch = (currentState) => {
+        const newCount = (currentState.searchCount || 0) + 1
+        let s = { ...currentState, searchCount: newCount }
+        const logs = []
+        // 3回ごとにHP-1
+        if (newCount % 3 === 0) {
+            const prevHp = Math.round(s.status.hp)
+            s = { ...s, status: { ...s.status, hp: Math.max(0, s.status.hp - 1) } }
+            logs.push({ text: `たいりょくが1さがった。（${prevHp}→${Math.round(s.status.hp)}）`, type: 'narration' })
+        }
+        const r = doSearch(s)
+        return { state: r.state, logs: [...r.logs, ...logs] }
+    }
+
     const handleBuyBento = (itemId) => { setTimeout(() => { const r = buyBentoItem(gameState, itemId); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state) }, 300) }
     const handleBuyFurugiya = (itemId) => { setTimeout(() => { const r = buyFurugiyaItem(gameState, itemId); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state) }, 300) }
     const handleBuyVeteranInfo = () => { setSubMenu(null); setTimeout(() => { const r = buyVeteranInfo(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state) }, 300) }
@@ -1375,7 +1389,7 @@ export default function App() {
                     <button onClick={() => setSubMenu('forecast')} style={{ ...SI, color: '#00ffff' }}>けいじばんをみる（てんきよほう）</button>
                     <button onClick={() => {
                         setIsProcessing(true)
-                        setTimeout(() => { const r = doSearch(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state); setIsProcessing(false) }, 500)
+                        setTimeout(() => { const r = handleSearch(gameState); setGameState(r.state); setRecentLogs(r.logs); saveGame(r.state); setIsProcessing(false) }, 500)
                     }} style={SI}>あたりをしらべる</button>
                     <button onClick={() => setSubMenu(null)} style={{ ...S, marginTop: 8 }}>もどる</button>
                 </div>

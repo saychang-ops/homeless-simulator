@@ -569,6 +569,7 @@ export const INITIAL_STATE = {
     clothingStorage: [],  // アイテムボックス（clothing item ID の配列）
     lastTickTime: null,
     totalActions: 0,
+    searchCount: 0,      // しらべる累計回数（3回ごとにHP-1）
     activeJob: null,     // { startTime, endTime, isGoodJob? }
     diseases: [],        // [{ id, level, lastEscalationTime }]
     hungerZeroStart: null, // hunger が0になった時刻 (Date.now())
