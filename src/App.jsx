@@ -145,22 +145,22 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                 <div style={{
                     position: 'relative', zIndex: 10, width: '100%', maxWidth: 520, height: '100dvh',
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'flex-start', paddingTop: '4dvh',
+                    justifyContent: 'flex-start', paddingTop: '1dvh',
                     boxSizing: 'border-box', overflow: 'hidden',
                 }}>
-                    {/* AI生成タイトル画像（上部を表示・人物が映る下部をトリム） */}
+                    {/* AI生成タイトル画像（上端を基点にスケール・タイトル文字を見切れさせない） */}
                     <div style={{
                         width: '100%', overflow: 'hidden',
-                        maxHeight: '65dvh', flexShrink: 0,
+                        maxHeight: '72dvh', flexShrink: 0,
                     }}>
                         <img
                             src="/img/title.png"
                             alt="HOMELESS SIMULATOR"
                             style={{
-                                width: '100%', height: '65dvh',
-                                objectFit: 'cover', objectPosition: 'center 20%',
+                                width: '100%', height: '72dvh',
+                                objectFit: 'cover', objectPosition: 'center top',
                                 imageRendering: 'pixelated', display: 'block',
-                                transform: 'scale(1.15)', transformOrigin: 'center top',
+                                transform: 'scale(1.12)', transformOrigin: 'center top',
                             }}
                         />
                     </div>
@@ -170,17 +170,17 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                         <div
                             onClick={onStart}
                             className="animate-blink"
-                            style={{ color: '#fff', fontSize: 18, marginTop: '3dvh', cursor: 'pointer', letterSpacing: 7, padding: '8px 0', fontWeight: 'bold' }}
+                            style={{ color: '#fff', fontSize: 18, marginTop: '2dvh', cursor: 'pointer', letterSpacing: 7, padding: '8px 0', fontWeight: 'bold' }}
                         >
                             TOUCH TO START
                         </div>
                     )}
 
-                    {/* タイトルメニュー */}
+                    {/* タイトルメニュー（NEW GAME / CONTINUE を横並びに） */}
                     {screen === 'menu' && (
-                        <div style={{ width: '82%', marginTop: '2dvh', display: 'flex', flexDirection: 'column', gap: '1.5dvh' }}>
-                            <button onClick={onNewGame} className="title-menu-btn">▶  NEW GAME</button>
-                            {hasSave && <button onClick={onContinue} className="title-menu-btn">▶  CONTINUE</button>}
+                        <div style={{ width: '90%', marginTop: '2dvh', display: 'flex', flexDirection: 'row', gap: 12 }}>
+                            <button onClick={onNewGame} className="title-menu-btn" style={{ flex: 1 }}>▶ NEW GAME</button>
+                            {hasSave && <button onClick={onContinue} className="title-menu-btn" style={{ flex: 1 }}>▶ CONTINUE</button>}
                         </div>
                     )}
                 </div>
