@@ -92,8 +92,12 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
     const [showFsBtn, setShowFsBtn] = useState(!document.fullscreenElement)
 
     useEffect(() => {
-        // タイトル表示直後にフルスクリーンを試行（対応ブラウザのみ有効）
-        document.documentElement.requestFullscreen().catch(() => { })
+        // タイトル表示直後にフルスクリーン＋横画面ロックを試行
+        document.documentElement.requestFullscreen()
+            .then(() => screen.orientation?.lock('landscape').catch(() => {}))
+            .catch(() => {
+                screen.orientation?.lock('landscape').catch(() => {})
+            })
     }, [])
 
     useEffect(() => {
@@ -108,18 +112,15 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
 
     const handleFsBtn = () => {
         document.documentElement.requestFullscreen()
-            .then(() => setShowFsBtn(false))
+            .then(() => {
+                setShowFsBtn(false)
+                screen.orientation?.lock('landscape').catch(() => {})
+            })
             .catch(() => { })
     }
 
     return (
         <>
-            <div className="portrait-warning">
-                <div style={{ fontSize: 36 }}>↻</div>
-                <div>スマホを横にしてください</div>
-                <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
-            </div>
-
             {/* フルスクリーン回復インジケーター（URLバーが出ているとき） */}
             {showFsBtn && (
                 <span
@@ -147,7 +148,7 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                     justifyContent: 'flex-start', paddingTop: '4dvh',
                     boxSizing: 'border-box', overflow: 'hidden',
                 }}>
-                    {/* AI生成タイトル画像（黒枠を scale でトリム、上寄せ） */}
+                    {/* AI生成タイトル画像（上部を表示・人物が映る下部をトリム） */}
                     <div style={{
                         width: '100%', overflow: 'hidden',
                         maxHeight: '65dvh', flexShrink: 0,
@@ -157,9 +158,9 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                             alt="HOMELESS SIMULATOR"
                             style={{
                                 width: '100%', height: '65dvh',
-                                objectFit: 'cover', objectPosition: 'center center',
+                                objectFit: 'cover', objectPosition: 'center 20%',
                                 imageRendering: 'pixelated', display: 'block',
-                                transform: 'scale(1.15)', transformOrigin: 'center center',
+                                transform: 'scale(1.15)', transformOrigin: 'center top',
                             }}
                         />
                     </div>
@@ -180,15 +181,6 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                         <div style={{ width: '82%', marginTop: '2dvh', display: 'flex', flexDirection: 'column', gap: '1.5dvh' }}>
                             <button onClick={onNewGame} className="title-menu-btn">▶  NEW GAME</button>
                             {hasSave && <button onClick={onContinue} className="title-menu-btn">▶  CONTINUE</button>}
-                        </div>
-                    )}
-
-                    {/* PWAインストール案内（ブラウザで開いているときのみ表示） */}
-                    {!window.matchMedia('(display-mode: fullscreen)').matches &&
-                     !window.matchMedia('(display-mode: standalone)').matches &&
-                     !window.navigator.standalone && (
-                        <div style={{ color: '#555', fontSize: 11, marginTop: 8, textAlign: 'center', lineHeight: 1.8, letterSpacing: 1 }}>
-                            📲 スマホは「ホーム画面に追加」すると<br />URLバーが消えてフルスクリーンになります
                         </div>
                     )}
                 </div>
@@ -1406,11 +1398,6 @@ export default function App() {
 
     return (
         <>
-            <div className="portrait-warning">
-                <div style={{ fontSize: 36 }}>↻</div>
-                <div>スマホを横にしてください</div>
-                <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
-            </div>
             <div onClick={() => soundManager.enable()} style={{ width: '100vw', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, fontSize: FS, userSelect: 'none', position: 'relative', background: '#000', overflow: 'hidden' }}>
                 <div className="crt-overlay" /><div className="crt-vignette" />
 
