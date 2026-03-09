@@ -1401,7 +1401,7 @@ export default function App() {
             )
         }
         if (subMenu === 'veteran_chat') {
-            const GEMINI_API_KEY = 'AIzaSyABMc5V2kCw6OqSRfpTH_lmxwEtwyFtG7o'
+            const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''
             const buildSystemPrompt = () => `あなたは東京・新宿の公園にいる70代のホームレスの老人NPCです。
 キャラクター：長年この公園で生き抜いてきた古参ホームレス。無口で気難しいが、同じホームレス仲間には時折ぼそっと本音を語る。元々は普通の労働者だったが、様々な事情でここにたどり着いた。
 返答ルール：
