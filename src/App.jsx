@@ -193,6 +193,14 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
     )
 }
 
+function seededRandom(seed) {
+    let h = 0
+    for (let i = 0; i < seed.length; i++) {
+        h = Math.imul(31, h) + seed.charCodeAt(i) | 0
+    }
+    return ((h >>> 0) / 4294967296)
+}
+
 export default function App() {
     const [gameState, setGameState] = useState(null)
     const [_logs, _setLogs] = useState([])
@@ -230,6 +238,8 @@ export default function App() {
     const [upgradeReveal, setUpgradeReveal] = useState(false)   // 新画像+光エフェクト
     const [upgradeImgSrc, setUpgradeImgSrc] = useState(null)    // 表示する新拠点画像
     const [gameOverTime, setGameOverTime] = useState(null)
+    const [veteranChatHistory, setVeteranChatHistory] = useState([]) // [{role:'user'|'model', text}]
+    const [veteranLoading, setVeteranLoading] = useState(false)
 
     // タイトル画面管理
     const [screen, setScreen] = useState('title')   // 'title' | 'menu' | 'game'
@@ -797,6 +807,8 @@ export default function App() {
     const timeStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`
     const feelsLikeStr = `${gameState.status.feelsLike ?? '--'}℃`
     const weatherFilter = weatherOverlay === 'rain' ? 'brightness(0.6) contrast(1.1)' : weatherOverlay === 'cloudy' ? 'brightness(0.8) saturate(0.7)' : 'none'
+    const isRainWeather = weatherData ? [2,3,5,6].includes(Math.floor(weatherData.weather.id / 100)) : false
+    const veteranPresent = gameState.area === 'park' && !isRainWeather && seededRandom(dateStr + 'veteran') >= 0.3
 
     const S = { color: '#fff', cursor: 'pointer', padding: '4px 0', fontSize: FS, background: 'none', border: 'none', textAlign: 'left', fontFamily: FONT, width: '100%', whiteSpace: 'normal', wordBreak: 'break-all' }
     const SI = { ...S, paddingLeft: '1em' }  // インデントつきスタイル
@@ -1272,8 +1284,11 @@ export default function App() {
                     {isSoudanAvailable && hasDiseases && (
                         <button onClick={handleVisitHospital} style={{ ...SI, color: '#ff9900' }}>しんさつをうける（くすり しょほう）</button>
                     )}
-                    {gameState.area === 'park' && (
-                        <button onClick={handleBuyVeteranInfo} style={{ ...SI, color: '#ffcc00' }}>ベテランにきく (¥50〜)</button>
+                    {gameState.area === 'park' && veteranPresent && (
+                        <button onClick={() => { setSubMenu('veteran_chat'); setVeteranChatHistory([]) }} style={{ ...SI, color: '#ffcc00' }}>ベテランに はなしかける</button>
+                    )}
+                    {gameState.area === 'park' && !veteranPresent && (
+                        <div style={{ color: '#555', fontSize: FS }}>{INDENT}（ベテランはいない）</div>
                     )}
                     {gameState.area === 'park' && trust >= TRUST_BENEFITS.priorityTicketThreshold && !(gameState.inventory || []).includes('priority_ticket') && (
                         <button onClick={handleGrantPriorityTicket} style={{ ...SI, color: '#33ffcc' }}>たきだしゆうせんけんをもらう</button>
@@ -1379,6 +1394,102 @@ export default function App() {
                         })
                     )}
                     <button onClick={() => setSubMenu('base')} style={{ ...S, marginTop: 8 }}>もどる</button>
+                </div>
+            )
+        }
+        if (subMenu === 'veteran_chat') {
+            const GEMINI_API_KEY = 'AIzaSyABMc5V2kCw6OqSRfpTH_lmxwEtwyFtG7o'
+            const buildSystemPrompt = () => `あなたは東京・新宿の公園にいる70代の元インテリ老紳士NPCです。
+キャラクター：厳格でリアリティ至上主義だが、プレイヤー（ホームレス）には親身な師として振る舞う。元官僚か大学教授。
+返答ルール：
+- 必ずひらがな中心のレトロゲーム風テキストで返答すること
+- 1回の返答は最大4行（改行含む）以内を厳守
+- 架空の情報は使わず、現実の新宿・東京・日本社会・歴史に基づいた会話をすること
+ゲームシステム知識（生存術で使用）：
+- HP0でゲームオーバー。くうふく0でHP減少。えいせい25以下でにおいペナルティ。
+- 拠点アップグレード：Lv1(だんボール3個+¥500)→Lv2(ブルーシート5枚)→Lv3(テント/福引特賞)
+- 収入源：日雇い・ちんちろりん・探索
+- 銭湯¥500でえいせい+80。医療支援イベントで病気治療。
+プレイヤー現在状況：HP${gameState.status.hp}/100 くうふく${Math.round(gameState.status.hunger)}/100 えいせい${Math.round(gameState.status.hygiene)}/100 しょじきん¥${gameState.status.yen} 拠点Lv${gameState.baseLevel}
+追い出しルール：プレイヤーが失礼・不快な言動をした場合、または話し続けて飽きたと判断した場合は、返答の最後に[KICK]とだけ記せ。`
+
+            const callGemini = async (userMessage, isSurvival) => {
+                setVeteranLoading(true)
+                const cost = isSurvival ? Math.floor(Math.random() * 51) + 50 : 0 // ¥50~100
+                if (isSurvival && gameState.status.yen < 50) {
+                    setRecentLogs([{ text: 'ベテラン「おかねが ないと おしえられないな…」', type: 'quote' }])
+                    setVeteranLoading(false)
+                    return
+                }
+                if (isSurvival) {
+                    setGameState(prev => ({ ...prev, status: { ...prev.status, yen: prev.status.yen - cost } }))
+                }
+                const history = veteranChatHistory.map(m => ({
+                    role: m.role,
+                    parts: [{ text: m.text }]
+                }))
+                const body = {
+                    system_instruction: { parts: [{ text: buildSystemPrompt() }] },
+                    contents: [
+                        ...history,
+                        { role: 'user', parts: [{ text: isSurvival ? `【生存術】${userMessage}` : userMessage }] }
+                    ],
+                    generationConfig: { maxOutputTokens: 200, temperature: 0.9 }
+                }
+                try {
+                    const res = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+                        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+                    )
+                    const data = await res.json()
+                    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ベテランは だまっている。'
+                    const kicked = reply.includes('[KICK]')
+                    const cleanReply = reply.replace('[KICK]', '').trim()
+                    setVeteranChatHistory(prev => [
+                        ...prev,
+                        { role: 'user', text: userMessage },
+                        { role: 'model', text: cleanReply }
+                    ])
+                    const logs = []
+                    if (isSurvival) logs.push({ text: `¥${cost} はらった。`, type: 'system' })
+                    logs.push({ text: `ベテラン「${cleanReply}」`, type: 'quote' })
+                    setRecentLogs(logs)
+                    if (kicked) {
+                        setTimeout(() => {
+                            setSubMenu(null)
+                            setVeteranChatHistory([])
+                            setRecentLogs([{ text: 'ベテランに おいだされた！ こうえんをでた。', type: 'system' }])
+                            // move to nishiguchi
+                            setGameState(prev => ({ ...prev, area: 'nishiguchi' }))
+                        }, 1500)
+                    }
+                } catch {
+                    setRecentLogs([{ text: 'ベテランは なにも こたえなかった。', type: 'system' }])
+                }
+                setVeteranLoading(false)
+            }
+
+            const topics = ['しんじゅくの むかし', 'さいきん どうですか', 'しゃかいについて', 'じんせいのはなしを']
+            const survivalTopics = ['からだを あたためるには（¥50~）', 'おかねを かせぐには（¥50~）', 'けんこうを たもつには（¥50~）', 'きょてんを きずくには（¥50~）']
+
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ color: '#ffcc00', fontSize: FS }}>ベテラン</div>
+                    {veteranLoading ? (
+                        <div style={{ color: '#aaa', fontSize: FS }} className="animate-blink">{INDENT}かんがえている…</div>
+                    ) : (
+                        <>
+                            <div style={{ color: '#aaa', fontSize: FS, marginBottom: 2 }}>{INDENT}── せけんばなし ──</div>
+                            {topics.map((t, i) => (
+                                <button key={i} onClick={() => callGemini(t, false)} style={SI} disabled={veteranLoading}>{t}</button>
+                            ))}
+                            <div style={{ color: '#ffb000', fontSize: FS, marginTop: 4 }}>{INDENT}── せいぞんじゅつ ──</div>
+                            {survivalTopics.map((t, i) => (
+                                <button key={i} onClick={() => callGemini(t.replace('（¥50~）', ''), true)} style={{ ...SI, color: '#ffb000' }} disabled={veteranLoading}>{t}</button>
+                            ))}
+                        </>
+                    )}
+                    <button onClick={() => { setSubMenu(null); setVeteranChatHistory([]) }} style={{ ...S, marginTop: 8, color: '#aaa' }}>その場を はなれる</button>
                 </div>
             )
         }
@@ -1500,6 +1611,23 @@ export default function App() {
                                 {upgradeFlash && <div className="upgrade-flash" />}
                                 {upgradeReveal && <div className="upgrade-reveal" />}
                                 {upgradeReveal && <div className="upgrade-overlay-pulse" />}
+                                {veteranPresent && gameState.area === 'park' && (
+                                    <img
+                                        src="/image/npc/veteran.png"
+                                        alt="ベテラン"
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: 0,
+                                            right: '8%',
+                                            height: '85%',
+                                            width: 'auto',
+                                            imageRendering: 'pixelated',
+                                            objectFit: 'contain',
+                                            zIndex: 3,
+                                            filter: weatherOverlay === 'cloudy' ? 'brightness(0.8)' : 'none',
+                                        }}
+                                    />
+                                )}
                             </div>
                         )}
                         {/* ログ: 画像の直下 */}
