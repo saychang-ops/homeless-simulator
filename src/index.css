@@ -152,31 +152,55 @@
     background: #777;
 }
 
-/* Rain overlay animation */
+/* Rain overlay animation – 2層・斜め雨（新宿の吹き溜まり） */
 .rain-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: repeating-linear-gradient(to bottom,
-            transparent 0px,
-            transparent 8px,
-            rgba(150, 180, 255, 0.12) 8px,
-            rgba(150, 180, 255, 0.12) 10px);
-    animation: rain-fall 0.4s linear infinite;
+    top: -20%;
+    left: -10%;
+    right: -10%;
+    bottom: -10%;
     pointer-events: none;
     z-index: 5;
 }
 
-@keyframes rain-fall {
-    0% {
-        background-position: 0 0;
-    }
+/* 遠景の細かい雨（速め） */
+.rain-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        105deg,
+        transparent 0px,
+        transparent 6px,
+        rgba(140, 170, 255, 0.10) 6px,
+        rgba(140, 170, 255, 0.10) 7px
+    );
+    animation: rain-far 0.35s linear infinite;
+}
 
-    100% {
-        background-position: -4px 20px;
-    }
+/* 近景の太い雨粒（遅め・やや明るい） */
+.rain-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        105deg,
+        transparent 0px,
+        transparent 14px,
+        rgba(180, 200, 255, 0.14) 14px,
+        rgba(180, 200, 255, 0.14) 16px
+    );
+    animation: rain-near 0.6s linear infinite;
+}
+
+@keyframes rain-far {
+    0%   { background-position: 0 0; }
+    100% { background-position: -8px 28px; }
+}
+
+@keyframes rain-near {
+    0%   { background-position: 0 0; }
+    100% { background-position: -14px 48px; }
 }
 
 /* ── 拠点アップグレード フラッシュ ── */

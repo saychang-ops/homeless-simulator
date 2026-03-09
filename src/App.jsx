@@ -120,18 +120,17 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                 <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Please rotate your device</div>
             </div>
 
-            {/* フルスクリーン回復ボタン（URLバーが出ているとき） */}
+            {/* フルスクリーン回復インジケーター（URLバーが出ているとき） */}
             {showFsBtn && (
-                <button
+                <span
                     onClick={handleFsBtn}
                     className="animate-blink"
                     style={{
-                        position: 'fixed', top: 8, left: 8, zIndex: 9999,
-                        background: '#c00', border: 'none', color: '#fff',
-                        width: 32, height: 32, fontSize: 18, cursor: 'pointer',
-                        borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        position: 'fixed', top: 6, left: 8, zIndex: 9999,
+                        color: '#f00', fontSize: 20, cursor: 'pointer',
+                        fontFamily: FONT, userSelect: 'none',
                     }}
-                >▲</button>
+                >▲</span>
             )}
 
             <div style={{
@@ -143,23 +142,34 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                 <div className="crt-vignette" />
 
                 <div style={{
-                    position: 'relative', zIndex: 10, width: '100%', maxWidth: 480, height: '100dvh',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 16px', boxSizing: 'border-box',
+                    position: 'relative', zIndex: 10, width: '100%', maxWidth: 520, height: '100dvh',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    justifyContent: 'flex-start', paddingTop: '4dvh',
+                    boxSizing: 'border-box', overflow: 'hidden',
                 }}>
-                    {/* AI生成タイトル画像 */}
-                    <img
-                        src="/img/title.png"
-                        alt="HOMELESS SIMULATOR"
-                        style={{ width: '100%', maxHeight: '70dvh', objectFit: 'contain', imageRendering: 'pixelated', display: 'block' }}
-                    />
+                    {/* AI生成タイトル画像（黒枠を scale でトリム、上寄せ） */}
+                    <div style={{
+                        width: '100%', overflow: 'hidden',
+                        maxHeight: '65dvh', flexShrink: 0,
+                    }}>
+                        <img
+                            src="/img/title.png"
+                            alt="HOMELESS SIMULATOR"
+                            style={{
+                                width: '100%', height: '65dvh',
+                                objectFit: 'cover', objectPosition: 'center center',
+                                imageRendering: 'pixelated', display: 'block',
+                                transform: 'scale(1.15)', transformOrigin: 'center center',
+                            }}
+                        />
+                    </div>
 
                     {/* TOUCH TO START（点滅） */}
                     {screen === 'title' && (
                         <div
                             onClick={onStart}
                             className="animate-blink"
-                            style={{ color: '#fff', fontSize: 18, marginTop: '4dvh', cursor: 'pointer', letterSpacing: 7, padding: '12px 0', fontWeight: 'bold' }}
+                            style={{ color: '#fff', fontSize: 18, marginTop: '3dvh', cursor: 'pointer', letterSpacing: 7, padding: '8px 0', fontWeight: 'bold' }}
                         >
                             TOUCH TO START
                         </div>
@@ -167,7 +177,7 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
 
                     {/* タイトルメニュー */}
                     {screen === 'menu' && (
-                        <div style={{ width: '82%', marginTop: '3dvh', display: 'flex', flexDirection: 'column', gap: '2dvh' }}>
+                        <div style={{ width: '82%', marginTop: '2dvh', display: 'flex', flexDirection: 'column', gap: '1.5dvh' }}>
                             <button onClick={onNewGame} className="title-menu-btn">▶  NEW GAME</button>
                             {hasSave && <button onClick={onContinue} className="title-menu-btn">▶  CONTINUE</button>}
                         </div>
@@ -177,7 +187,7 @@ function TitleScreen({ screen, hasSave, onStart, onNewGame, onContinue }) {
                     {!window.matchMedia('(display-mode: fullscreen)').matches &&
                      !window.matchMedia('(display-mode: standalone)').matches &&
                      !window.navigator.standalone && (
-                        <div style={{ color: '#555', fontSize: 11, marginTop: 10, textAlign: 'center', lineHeight: 1.8, letterSpacing: 1 }}>
+                        <div style={{ color: '#555', fontSize: 11, marginTop: 8, textAlign: 'center', lineHeight: 1.8, letterSpacing: 1 }}>
                             📲 スマホは「ホーム画面に追加」すると<br />URLバーが消えてフルスクリーンになります
                         </div>
                     )}
