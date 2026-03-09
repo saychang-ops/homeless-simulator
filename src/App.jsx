@@ -31,13 +31,17 @@ const INDENT = '\u3000'  // 全角スペース
 
 let globalLogIdCounter = 1
 
-const TypewriterTextArea = ({ logs, logColor }) => {
+const TypewriterTextArea = ({ logs, logColor, onUpdate }) => {
     const [visibleChars, setVisibleChars] = useState({})
     const [skipAll, setSkipAll] = useState(false)
 
     useEffect(() => {
         setSkipAll(false)
     }, [logs])
+
+    useEffect(() => {
+        if (onUpdate) onUpdate()
+    }, [visibleChars, onUpdate])
 
     useEffect(() => {
         if (skipAll) return
@@ -255,6 +259,13 @@ export default function App() {
         el.scrollTop = el.scrollHeight
         updateLogScroll()
     }, [logs, updateLogScroll])
+
+    const scrollLogToBottom = useCallback(() => {
+        const el = logAreaRef.current
+        if (!el) return
+        el.scrollTop = el.scrollHeight
+        updateLogScroll()
+    }, [updateLogScroll])
 
     /* ── サイコロSE ── */
     const playDiceSE = useCallback(() => {
@@ -1472,7 +1483,7 @@ export default function App() {
                                 }}
                             >
                                 {workLog && <div style={{ color: '#ffb000', fontSize: FS, lineHeight: 2, letterSpacing: 2 }}>{workLog}</div>}
-                                <TypewriterTextArea logs={logs} logColor={logColor} />
+                                <TypewriterTextArea logs={logs} logColor={logColor} onUpdate={scrollLogToBottom} />
                                 {isProcessing && <div style={{ color: '#fff' }} className="animate-blink">▼</div>}
                             </div>
                             {logShowScrollUp && (
