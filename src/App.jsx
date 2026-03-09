@@ -1151,8 +1151,8 @@ export default function App() {
                             <button onClick={exitChinchiro} style={{ ...SI, color: '#fff', fontSize: FS }}>きょてんにもどる</button>
                         </>
                     )}
-                    {chinchiro.phase !== 'game_over' && (
-                        <button onClick={exitChinchiro} style={{ ...S, marginTop: 8, color: '#aaa', fontSize: FS }}>やめる</button>
+                    {chinchiro.phase === 'round_end' && (
+                        <button onClick={exitChinchiro} style={{ ...S, marginTop: 4, color: '#aaa', fontSize: FS }}>やめる</button>
                     )}
                 </div>
             )
