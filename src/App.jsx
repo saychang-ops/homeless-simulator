@@ -1440,10 +1440,11 @@ export default function App() {
                 }
                 try {
                     const res = await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+                        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
                         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
                     )
                     const data = await res.json()
+                    if (data.error) throw new Error(data.error.message)
                     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ベテランは だまっている。'
                     const kicked = reply.includes('[KICK]')
                     const cleanReply = reply.replace('[KICK]', '').trim()
@@ -1464,8 +1465,9 @@ export default function App() {
                             setRecentLogs([{ text: 'ベテランは たちさった。しばらく いないだろう。', type: 'system' }])
                         }, 1500)
                     }
-                } catch {
-                    setRecentLogs([{ text: 'ベテランは なにも こたえなかった。', type: 'system' }])
+                } catch (err) {
+                    console.error('[veteran API error]', err)
+                    setRecentLogs([{ text: `ベテランは なにも こたえなかった。（${err.message?.slice(0,30) || 'error'}）`, type: 'system' }])
                 }
                 setVeteranLoading(false)
             }
